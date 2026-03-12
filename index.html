@@ -837,6 +837,10 @@ function renderClientDetail(clientId) {
               </div>
             </div>
             ${cl.rsName?`<div style="margin-top:6px"><span class="rs-tag">🏥 ${cl.rsName}</span></div>`:''}
+            <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+              ${cl.claimStage?`<span class="badge badge-yellow">Stage: ${cl.claimStage}</span>`:''}
+              ${cl.cashlessStatus?`<span class="badge badge-teal">Cashless: ${cl.cashlessStatus}</span>`:''}
+            </div>
             <div style="margin-top:4px;font-size:12px;color:var(--text-muted)">
               ${fmtDate(cl.date)} · ${rupiah(cl.amount)}
               ${cl.dischargeDate?' · Pulang: '+fmtDate(cl.dischargeDate):''}
@@ -973,6 +977,25 @@ function openClaimModal(cid, claimId) {
     </div>
 
     <div class="form-row">
+      <div class="form-group"><label>Claim Stage</label>
+        <select id="f_cstage">
+          <option value="" ${!cl.claimStage?'selected':''}>— Select —</option>
+          <option ${cl.claimStage==='Preadmission'?'selected':''}>Preadmission</option>
+          <option ${cl.claimStage==='Admission'?'selected':''}>Admission</option>
+          <option ${cl.claimStage==='Discharge'?'selected':''}>Discharge</option>
+          <option ${cl.claimStage==='Final Approval'?'selected':''}>Final Approval</option>
+        </select></div>
+      <div class="form-group"><label>Cashless Status</label>
+        <select id="f_cashst">
+          <option value="" ${!cl.cashlessStatus?'selected':''}>— Select —</option>
+          <option ${cl.cashlessStatus==='Waiting LoG'?'selected':''}>Waiting LoG</option>
+          <option ${cl.cashlessStatus==='LoG Issued'?'selected':''}>LoG Issued</option>
+          <option ${cl.cashlessStatus==='Discharged'?'selected':''}>Discharged</option>
+          <option ${cl.cashlessStatus==='Settled'?'selected':''}>Settled</option>
+        </select></div>
+    </div>
+
+    <div class="form-row">
       <div class="form-group"><label>Status</label>
         <select id="f_cstat"><option ${cl.status==='Submitted'?'selected':''}>Submitted</option>
         <option ${cl.status==='SKD Pending'?'selected':''}>SKD Pending</option>
@@ -1037,6 +1060,8 @@ function saveClaim(cid, claimId) {
     skdCount: document.getElementById('f_skd')?.value||'',
     jneResi: document.getElementById('f_jne')?.value||'',
     status: document.getElementById('f_cstat').value,
+    claimStage: document.getElementById('f_cstage').value,
+    cashlessStatus: document.getElementById('f_cashst').value,
     currentStep: step,
     notes: document.getElementById('f_cnotes').value.trim()
   };
@@ -1070,6 +1095,24 @@ function openClaimStepModal(claimId) {
     ${renderPipeline(cl)}
     <div class="form-group" style="margin-top:14px"><label>Move to Step</label>
       <select id="f_newstep">${steps.map(s=>`<option ${cl.currentStep===s?'selected':''}>${s}</option>`).join('')}</select></div>
+    <div class="form-row">
+      <div class="form-group"><label>Claim Stage</label>
+        <select id="f_newstage">
+          <option value="" ${!cl.claimStage?'selected':''}>— Select —</option>
+          <option ${cl.claimStage==='Preadmission'?'selected':''}>Preadmission</option>
+          <option ${cl.claimStage==='Admission'?'selected':''}>Admission</option>
+          <option ${cl.claimStage==='Discharge'?'selected':''}>Discharge</option>
+          <option ${cl.claimStage==='Final Approval'?'selected':''}>Final Approval</option>
+        </select></div>
+      <div class="form-group"><label>Cashless Status</label>
+        <select id="f_newcashst">
+          <option value="" ${!cl.cashlessStatus?'selected':''}>— Select —</option>
+          <option ${cl.cashlessStatus==='Waiting LoG'?'selected':''}>Waiting LoG</option>
+          <option ${cl.cashlessStatus==='LoG Issued'?'selected':''}>LoG Issued</option>
+          <option ${cl.cashlessStatus==='Discharged'?'selected':''}>Discharged</option>
+          <option ${cl.cashlessStatus==='Settled'?'selected':''}>Settled</option>
+        </select></div>
+    </div>
     <div class="form-group"><label>Update Status</label>
       <select id="f_newstat"><option ${cl.status==='Submitted'?'selected':''}>Submitted</option>
       <option ${cl.status==='SKD Pending'?'selected':''}>SKD Pending</option>
@@ -1089,10 +1132,12 @@ function updateClaimStep(claimId) {
   const cl = D.claims.find(c=>c.id===claimId);
   if (!cl) return;
   cl.currentStep = document.getElementById('f_newstep').value;
+  cl.claimStage = document.getElementById('f_newstage').value;
+  cl.cashlessStatus = document.getElementById('f_newcashst').value;
   cl.status = document.getElementById('f_newstat').value;
   const note = document.getElementById('f_stepnote').value.trim();
   if (note) { cl.notes = (cl.notes?cl.notes+'\n':'')+`[${fmtShort(new Date())}] ${note}`; }
-  addActivity(cl.clientId,cl.clientName,'claim',`Claim step: ${cl.currentStep} — ${cl.status}${note?' — '+note:''}`);
+  addActivity(cl.clientId,cl.clientName,'claim',`Claim step: ${cl.currentStep} — ${cl.status}${cl.claimStage?' — Stage: '+cl.claimStage:''}${cl.cashlessStatus?' — Cashless: '+cl.cashlessStatus:''}${note?' — '+note:''}`); 
 
   // Auto follow-up for 30-day control if settled inpatient
   if (cl.status==='Settled' && cl.serviceType==='Rawat Inap' && cl.dischargeDate) {
@@ -1153,6 +1198,7 @@ function renderClaims() {
         </div>
         ${cl.rsName?`<span class="rs-tag" style="margin-top:6px">🏥 ${cl.rsName}</span>`:''}
         <div style="font-size:12px;color:var(--text-muted);margin-top:4px">${cl.serviceType} · ${cl.diagnosis||'—'}</div>
+        <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">${cl.claimStage?`<span class="badge badge-yellow">Stage: ${cl.claimStage}</span>`:''} ${cl.cashlessStatus?`<span class="badge badge-teal">Cashless: ${cl.cashlessStatus}</span>`:''}</div>
         ${renderPipeline(cl)}
       </div>
     `).join('');
@@ -1344,7 +1390,7 @@ function genReport() {
     L.push(''); L.push('─────────────────');
     L.push(`🏥 *CLAIMS*`);
     L.push(`This period: ${cls.length} | Total pending: ${pending.length}`);
-    cls.forEach(c=>L.push(`  • ${c.clientName} — ${c.serviceType} ${c.method} — ${c.rsName||'—'} — *${c.status}* — ${c.currentStep||''}`));
+    cls.forEach(c=>L.push(`  • ${c.clientName} — ${c.serviceType} ${c.method} — ${c.rsName||'—'} — *${c.status}*${c.claimStage?' — Stage: '+c.claimStage:''}${c.cashlessStatus?' — Cashless: '+c.cashlessStatus:''}`));
     if(pending.length){ L.push('\n⚠️ *Pending:*'); pending.forEach(c=>L.push(`  • ${c.clientName} — ${c.rsName||'—'} — ${c.currentStep} (${c.status})`)); }
   }
 
