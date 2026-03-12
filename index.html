@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RM Tracker — Sylvia Sovinski</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #181b23;
+  --surface2: #1e2230;
+  --border: #2a2e3b;
+  --border-light: #353a4a;
+  --text: #e8eaf0;
+  --text-muted: #8b90a0;
+  --text-dim: #5c6070;
+  --accent: #4f8cff;
+  --accent-soft: rgba(79,140,255,0.12);
+  --green: #34d399;
+  --green-soft: rgba(52,211,153,0.12);
+  --orange: #fb923c;
+  --orange-soft: rgba(251,146,60,0.12);
+  --red: #f87171;
+  --red-soft: rgba(248,113,113,0.12);
+  --purple: #a78bfa;
+  --purple-soft: rgba(167,139,250,0.12);
+  --yellow: #fbbf24;
+  --yellow-soft: rgba(251,191,36,0.12);
+  --teal: #2dd4bf;
+  --teal-soft: rgba(45,212,191,0.12);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.app { display: flex; height: 100vh; }
+
+.sidebar {
+  width: 230px;
+  min-width: 230px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 0;
+  transition: transform .3s;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  padding: 0 18px 18px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+
+.sidebar-brand h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.sidebar-brand p {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 3px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.nav-section {
+  padding: 10px 12px 3px;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all .15s;
+  border-left: 3px solid transparent;
+}
+
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,.03); }
+.nav-item.active { color: var(--accent); background: var(--accent-soft); border-left-color: var(--accent); }
+.nav-item svg { width: 17px; height: 17px; flex-shrink: 0; }
+.nav-item .nav-badge {
+  margin-left: auto;
+  background: var(--red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.topbar-left { display:flex; align-items:center; gap:10px; min-width:0; }
+.topbar-left h2 { font-size:16px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+.topbar-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.topbar-nav button {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+}
+
+.topbar-nav button:hover:not(:disabled) { color: var(--text); border-color: var(--border-light); }
+.topbar-nav button:disabled { opacity: .3; cursor: default; }
+.topbar-nav button svg { width: 16px; height: 16px; }
+
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.topbar-actions { display:flex; gap:8px; flex-shrink:0; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all .15s;
+  white-space: nowrap;
+}
+
+.btn-primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.btn-primary:hover { background:#3d7aee; }
+.btn-secondary { background:var(--surface2); color:var(--text); border-color:var(--border); }
+.btn-secondary:hover { border-color:var(--border-light); }
+.btn-sm { padding:5px 10px; font-size:11.5px; }
+.btn-xs { padding:3px 8px; font-size:11px; }
+.btn-danger { background:var(--red-soft); color:var(--red); }
+.btn-danger:hover { background:rgba(248,113,113,0.2); }
+.btn-ghost { background:transparent; color:var(--text-muted); border:none; padding:5px 8px; }
+.btn-ghost:hover { color:var(--text); background:rgba(255,255,255,.05); }
+.btn-wa { background:#25D366; color:#fff; border-color:#25D366; }
+.btn-wa:hover { background:#1da851; }
+.btn svg { width:15px; height:15px; }
+
+.content { flex:1; overflow-y:auto; padding:20px 24px; }
+
+/* Stats */
+.stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:20px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 18px; }
+.stat-card .label { font-size:10px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.7px; }
+.stat-card .value { font-size:26px; font-weight:700; margin-top:4px; font-family:'Playfair Display',serif; }
+.stat-card .sub { font-size:11px; color:var(--text-dim); margin-top:2px; }
+
+/* Card */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:14px; }
+.card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; gap:8px; flex-wrap:wrap; }
+.card-header h3 { font-size:14px; font-weight:600; }
+
+/* Table */
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:12.5px; }
+th { text-align:left; padding:8px 10px; font-size:10px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:.7px; border-bottom:1px solid var(--border); white-space:nowrap; }
+td { padding:10px; border-bottom:1px solid var(--border); vertical-align:top; }
+tr:hover td { background:rgba(255,255,255,.015); }
+tr.clickable { cursor:pointer; }
+tr.clickable:hover td { background:rgba(79,140,255,.04); }
+
+.badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:10.5px; font-weight:600; white-space:nowrap; }
+.badge-green { background:var(--green-soft); color:var(--green); }
+.badge-orange { background:var(--orange-soft); color:var(--orange); }
+.badge-red { background:var(--red-soft); color:var(--red); }
+.badge-blue { background:var(--accent-soft); color:var(--accent); }
+.badge-purple { background:var(--purple-soft); color:var(--purple); }
+.badge-yellow { background:var(--yellow-soft); color:var(--yellow); }
+.badge-teal { background:var(--teal-soft); color:var(--teal); }
+
+/* Modal */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(4px);
+  display:flex; align-items:center; justify-content:center; z-index:1000; padding:16px;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.modal-overlay.active { opacity:1; pointer-events:all; }
+.modal {
+  background:var(--surface); border:1px solid var(--border); border-radius:14px;
+  width:100%; max-width:600px; max-height:88vh; overflow-y:auto; padding:24px;
+}
+.modal h3 { font-size:17px; font-weight:700; margin-bottom:18px; font-family:'Playfair Display',serif; }
+.form-group { margin-bottom:12px; }
+.form-group label { display:block; font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:.4px; }
+.form-group input, .form-group select, .form-group textarea {
+  width:100%; padding:9px 12px; background:var(--surface2); border:1px solid var(--border);
+  border-radius:7px; font-size:13px; font-family:inherit; color:var(--text); transition:border-color .15s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:var(--accent); }
+.form-group textarea { resize:vertical; min-height:60px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.form-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:18px; }
+.form-hint { font-size:11px; color:var(--text-dim); margin-top:3px; }
+
+/* Activity */
+.activity-item { display:flex; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); }
+.activity-item:last-child { border-bottom:none; }
+.activity-dot { width:7px; height:7px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+.activity-content { flex:1; }
+.activity-content .text { font-size:12.5px; line-height:1.5; }
+.activity-content .meta { font-size:10.5px; color:var(--text-dim); margin-top:2px; }
+
+/* Search */
+.search-box {
+  display:flex; align-items:center; gap:7px; background:var(--surface2);
+  border:1px solid var(--border); border-radius:7px; padding:0 10px; width:220px;
+}
+.search-box svg { width:15px; height:15px; color:var(--text-dim); flex-shrink:0; }
+.search-box input { flex:1; background:none; border:none; padding:8px 0; font-size:12.5px; color:var(--text); font-family:inherit; }
+.search-box input:focus { outline:none; }
+
+/* WA preview */
+.wa-preview {
+  background:#0b141a; border-radius:10px; padding:18px; font-size:12.5px;
+  line-height:1.7; white-space:pre-wrap; color:#e9edef; font-family:'DM Sans',sans-serif;
+  max-height:380px; overflow-y:auto; border:1px solid #1e2e38;
+}
+
+/* Toast */
+.toast {
+  position:fixed; bottom:20px; right:20px; background:var(--green); color:#000;
+  padding:10px 18px; border-radius:8px; font-size:12.5px; font-weight:600;
+  transform:translateY(80px); opacity:0; transition:all .3s; z-index:2000;
+}
+.toast.show { transform:translateY(0); opacity:1; }
+
+/* Empty */
+.empty-state { text-align:center; padding:50px 20px; color:var(--text-dim); }
+.empty-state h4 { font-size:15px; color:var(--text-muted); margin-bottom:5px; }
+.empty-state p { font-size:12.5px; }
+
+/* Claim pipeline */
+.pipeline { display:flex; gap:2px; margin:8px 0; }
+.pipeline-step {
+  flex:1; padding:6px 8px; text-align:center; font-size:10px; font-weight:600;
+  background:var(--surface2); color:var(--text-dim); position:relative;
+  border-radius:4px; transition: all .2s;
+}
+.pipeline-step.done { background:var(--green-soft); color:var(--green); }
+.pipeline-step.active { background:var(--accent-soft); color:var(--accent); border:1px solid var(--accent); }
+.pipeline-step.pending { background:var(--surface2); color:var(--text-dim); }
+
+/* Detail meta */
+.detail-meta { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:18px; }
+.detail-meta-item .label { font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.4px; }
+.detail-meta-item .val { font-size:13px; font-weight:500; margin-top:1px; }
+
+/* Tabs */
+.tabs { display:flex; gap:2px; margin-bottom:16px; border-bottom:1px solid var(--border); }
+.tab {
+  padding:7px 14px; font-size:12.5px; font-weight:500; color:var(--text-muted);
+  cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .15s;
+}
+.tab:hover { color:var(--text); }
+.tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+/* Filter */
+.filter-row { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; align-items:center; }
+.filter-row select {
+  padding:6px 10px; background:var(--surface2); border:1px solid var(--border);
+  border-radius:7px; font-size:11.5px; color:var(--text); font-family:inherit;
+}
+
+/* RS tag */
+.rs-tag {
+  display:inline-flex; align-items:center; gap:4px; padding:3px 8px;
+  background:var(--purple-soft); color:var(--purple); border-radius:6px;
+  font-size:10.5px; font-weight:600;
+}
+
+/* Control reminder */
+.control-banner {
+  background: rgba(251,191,36,0.08);
+  border: 1px solid rgba(251,191,36,0.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--yellow);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .sidebar { position:fixed; left:0; top:0; bottom:0; z-index:900; transform:translateX(-100%); }
+  .sidebar.open { transform:translateX(0); }
+  .hamburger { display:block; }
+  .search-box { width:140px; }
+  .form-row, .form-row-3 { grid-template-columns:1fr; }
+  .stats-row { grid-template-columns:1fr 1fr; }
+  .pipeline { flex-wrap:wrap; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <h1>RM Tracker</h1>
+      <p>Sylvia Sovinski</p>
+    </div>
+    <div class="nav-section">Main</div>
+    <div class="nav-item active" data-page="dashboard" onclick="nav('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" data-page="clients" onclick="nav('clients')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Clients
+    </div>
+    <div class="nav-item" data-page="claims" onclick="nav('claims')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Claims
+      <span class="nav-badge" id="claimBadge" style="display:none"></span>
+    </div>
+    <div class="nav-item" data-page="followups" onclick="nav('followups')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Follow-ups
+      <span class="nav-badge" id="fuBadge" style="display:none"></span>
+    </div>
+    <div class="nav-section">Tools</div>
+    <div class="nav-item" data-page="report" onclick="nav('report')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      WA Report
+    </div>
+    <div class="nav-item" data-page="guide" onclick="nav('guide')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      Claim Guide
+    </div>
+    <div class="nav-item" data-page="settings" onclick="nav('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </div>
+    <div class="nav-item" data-page="sync" onclick="nav('sync')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      Sync Devices
+    </div>
+    <div style="padding:10px 18px;margin-top:auto;font-size:10px;color:var(--text-dim);border-top:1px solid var(--border)" id="syncIndicator">💾 Data saved locally</div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="topbar-nav">
+          <button onclick="historyBack()" id="btnBack" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <button onclick="historyForward()" id="btnFwd" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+        <h2 id="pageTitle">Dashboard</h2>
+      </div>
+      <div class="topbar-actions" id="topbarActions"></div>
+    </div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="modalOverlay" onclick="event.target===this&&closeModal()">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════
+// DATA
+// ═══════════════════════════════════
+const SK = 'rm_tracker_v2';
+const defaultData = () => ({
+  clients:[], activities:[], claims:[], followups:[],
+  settings:{ rmName:'', leaderName:'', agencyName:'Gracia' }
+});
+
+function load() {
+  try {
+    const r = localStorage.getItem(SK);
+    if (r) { const d = JSON.parse(r); const def = defaultData(); for (const k of Object.keys(def)) if (!(k in d)) d[k]=def[k]; return d; }
+  } catch(e){}
+  return defaultData();
+}
+
+let D = load();
+function save() {
+  D._lastSaved = new Date().toISOString();
+  localStorage.setItem(SK, JSON.stringify(D));
+  const el = document.getElementById('syncIndicator');
+  if (el) el.innerHTML = '💾 Saved ' + fmtShort(new Date());
+}
+
+// ═══════════════════════════════════
+// UTILS
+// ═══════════════════════════════════
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const fmtDate = d => { if(!d) return '—'; return new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}); };
+const fmtShort = d => { if(!d) return '—'; return new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'short'}); };
+const daysFrom = d => { if(!d) return Infinity; return Math.ceil((new Date(d)-new Date())/(864e5)); };
+const today = () => new Date().toISOString().slice(0,10);
+const rupiah = n => n ? 'Rp '+Number(n).toLocaleString('id') : '—';
+
+function toast(m) { const e=document.getElementById('toast'); e.textContent=m; e.classList.add('show'); setTimeout(()=>e.classList.remove('show'),2500); }
+function openModal(h) { document.getElementById('modalContent').innerHTML=h; document.getElementById('modalOverlay').classList.add('active'); }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+
+function waLink(phone, text) {
+  let p = (phone||'').replace(/[^0-9]/g,'');
+  if (p.startsWith('0')) p = '62'+p.slice(1);
+  const url = text ? `https://wa.me/${p}?text=${encodeURIComponent(text)}` : `https://wa.me/${p}`;
+  window.open(url,'_blank');
+}
+
+function addActivity(cid, cname, type, text) {
+  D.activities.push({ id:uid(), clientId:cid, clientName:cname, type, text, date:new Date().toISOString() });
+}
+
+// ═══════════════════════════════════
+// NAVIGATION with History
+// ═══════════════════════════════════
+let navHistory = [];
+let navIndex = -1;
+let navigating = false;
+
+function nav(page, opts) {
+  if (!navigating) {
+    // trim forward history
+    navHistory = navHistory.slice(0, navIndex+1);
+    navHistory.push({page, opts});
+    navIndex = navHistory.length - 1;
+  }
+  updateNavButtons();
+  renderPage(page, opts);
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+function historyBack() {
+  if (navIndex > 0) { navIndex--; navigating=true; const h=navHistory[navIndex]; nav(h.page, h.opts); navigating=false; }
+}
+
+function historyForward() {
+  if (navIndex < navHistory.length-1) { navIndex++; navigating=true; const h=navHistory[navIndex]; nav(h.page, h.opts); navigating=false; }
+}
+
+function updateNavButtons() {
+  document.getElementById('btnBack').disabled = navIndex <= 0;
+  document.getElementById('btnFwd').disabled = navIndex >= navHistory.length-1;
+}
+
+function renderPage(page, opts) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page===page));
+  const titles = { dashboard:'Dashboard', clients:'Clients', claims:'Claims', followups:'Follow-ups', report:'WA Report', guide:'Claim Guide', settings:'Settings', sync:'Sync Devices', clientDetail:'Client Detail' };
+  document.getElementById('pageTitle').textContent = titles[page]||'';
+  updateBadges();
+
+  const r = { dashboard:renderDashboard, clients:renderClients, claims:renderClaims, followups:renderFollowups, report:renderReport, guide:renderGuide, settings:renderSettings, sync:renderSync, clientDetail:()=>renderClientDetail(opts?.clientId) };
+  (r[page]||renderDashboard)();
+}
+
+function updateBadges() {
+  const pending = D.claims.filter(c => !['Settled','Rejected'].includes(c.status)).length;
+  const cb = document.getElementById('claimBadge');
+  if (pending>0) { cb.textContent=pending; cb.style.display=''; } else cb.style.display='none';
+
+  const overdue = D.followups.filter(f => f.status!=='Done' && daysFrom(f.dueDate)<0).length;
+  const fb = document.getElementById('fuBadge');
+  if (overdue>0) { fb.textContent=overdue; fb.style.display=''; } else fb.style.display='none';
+}
+
+// ═══════════════════════════════════
+// CLAIM PIPELINE STEPS
+// ═══════════════════════════════════
+const CLAIM_STEPS_CASHLESS = ['SKD','Pengajuan ke RS','Jaminan Awal','Rawat Inap','Jaminan Akhir','Review Prudential','Settled'];
+const CLAIM_STEPS_REIMBURSE = ['SKD','Kumpulkan Dokumen','Kirim via JNE','Review Prudential','Klarifikasi','Settled'];
+const CLAIM_STEPS_OUTPATIENT = ['Kunjungan RS/Dokter','Simpan Kwitansi','Selesai'];
+
+function getSteps(claim) {
+  if (claim.method==='Cashless') return CLAIM_STEPS_CASHLESS;
+  if (claim.method==='Reimbursement') return CLAIM_STEPS_REIMBURSE;
+  return CLAIM_STEPS_OUTPATIENT;
+}
+
+function renderPipeline(claim) {
+  const steps = getSteps(claim);
+  const ci = steps.indexOf(claim.currentStep);
+  return `<div class="pipeline">${steps.map((s,i) => {
+    let cls = i < ci ? 'done' : i === ci ? 'active' : 'pending';
+    if (claim.status==='Settled') cls='done';
+    if (claim.status==='Rejected') cls = i===ci?'active':'pending';
+    return `<div class="pipeline-step ${cls}">${s}</div>`;
+  }).join('')}</div>`;
+}
+
+// ═══════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════
+function renderDashboard() {
+  const tc = D.clients.length;
+  const ap = D.clients.reduce((a,c) => a+(c.policies||[]).length, 0);
+  const pc = D.claims.filter(c => !['Settled','Rejected'].includes(c.status)).length;
+  const overdueFU = D.followups.filter(f => f.status!=='Done' && daysFrom(f.dueDate)<0).length;
+  const upFU = D.followups.filter(f => f.status!=='Done' && daysFrom(f.dueDate)>=0 && daysFrom(f.dueDate)<=7).length;
+
+  // 30-day control reminders
+  const controlReminders = [];
+  D.claims.filter(c => c.status==='Settled' && c.serviceType==='Rawat Inap' && c.dischargeDate).forEach(cl => {
+    const d = daysFrom(cl.dischargeDate);
+    const daysLeft = 30 + d; // d is negative (past), so 30+d = days remaining
+    // Actually: discharge was in the past, so days since discharge = -d
+    const daysSince = -d;
+    if (daysSince >= 0 && daysSince <= 90) {
+      const client = D.clients.find(c => c.id === cl.clientId);
+      controlReminders.push({ client, claim:cl, daysSince, daysLeft: 90-daysSince });
+    }
+  });
+
+  document.getElementById('topbarActions').innerHTML = `
+    <button class="btn btn-primary" onclick="openAddClientModal()">+ Add Client</button>`;
+
+  const recentAct = [...D.activities].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
+  const urgentFU = D.followups.filter(f=>f.status!=='Done').sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate)).slice(0,6);
+  const activeClaims = D.claims.filter(c=>!['Settled','Rejected'].includes(c.status)).slice(0,5);
+
+  let html = `
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Total Clients</div><div class="value">${tc}</div></div>
+      <div class="stat-card"><div class="label">Active Policies</div><div class="value">${ap}</div></div>
+      <div class="stat-card"><div class="label">Pending Claims</div><div class="value" style="color:var(--orange)">${pc}</div></div>
+      <div class="stat-card"><div class="label">Follow-ups</div><div class="value" style="color:${overdueFU?'var(--red)':'var(--green)'}">${upFU}</div><div class="sub">${overdueFU} overdue</div></div>
+    </div>`;
+
+  // Control reminders
+  if (controlReminders.length) {
+    html += controlReminders.map(cr => `
+      <div class="control-banner">
+        ⏰ <strong>${cr.client?.name||'Client'}</strong> — Kontrol pasca rawat inap: ${cr.daysSince} hari sejak pulang, sisa ${cr.daysLeft} hari untuk kontrol (90 hari).
+        RS: ${cr.claim.rsName||'—'}
+      </div>`).join('');
+  }
+
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">`;
+
+  // Active claims
+  if (activeClaims.length) {
+    html += `<div class="card">
+      <div class="card-header"><h3>Active Claims</h3></div>
+      ${activeClaims.map(cl => {
+        const client = D.clients.find(c=>c.id===cl.clientId);
+        return `<div style="margin-bottom:12px;cursor:pointer" onclick="nav('clientDetail',{clientId:'${cl.clientId}'})">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-weight:600;font-size:13px">${client?.name||'?'}</span>
+            <span class="badge ${cl.method==='Cashless'?'badge-teal':'badge-purple'}">${cl.method||'—'}</span>
+          </div>
+          ${cl.rsName?`<span class="rs-tag">🏥 ${cl.rsName}</span>`:''}
+          ${renderPipeline(cl)}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  // Recent activity
+  html += `<div class="card">
+    <div class="card-header"><h3>Recent Activity</h3></div>
+    ${recentAct.length===0?'<p style="color:var(--text-dim);font-size:12px">No activities yet.</p>':
+      recentAct.map(a => {
+        const colors={call:'var(--green)',note:'var(--accent)',claim:'var(--orange)',policy:'var(--purple)',followup:'var(--yellow)',other:'var(--text-dim)'};
+        return `<div class="activity-item">
+          <div class="activity-dot" style="background:${colors[a.type]||colors.other}"></div>
+          <div class="activity-content">
+            <div class="text">${a.text}</div>
+            <div class="meta">${fmtDate(a.date)}${a.clientName?' · '+a.clientName:''}</div>
+          </div>
+        </div>`;
+      }).join('')}
+  </div>`;
+
+  html += `</div>`;
+
+  // Urgent followups
+  if (urgentFU.length) {
+    html += `<div class="card">
+      <div class="card-header"><h3>Upcoming Follow-ups</h3></div>
+      <div class="table-wrap"><table><thead><tr><th>Client</th><th>Task</th><th>Due</th><th>Status</th></tr></thead><tbody>
+      ${urgentFU.map(f => {
+        const d = daysFrom(f.dueDate);
+        const overdue = d<0 && f.status!=='Done';
+        let lbl = d<0?Math.abs(d)+'d overdue':d===0?'Today':d===1?'Tomorrow':d+'d';
+        let bc = d<0?'badge-red':d<=2?'badge-orange':'badge-blue';
+        return `<tr class="clickable" onclick="nav('clientDetail',{clientId:'${f.clientId}'})">
+          <td style="font-weight:600">${f.clientName}</td>
+          <td>${f.task}</td>
+          <td><span class="badge ${bc}">${lbl}</span></td>
+          <td>${f.status}</td>
+        </tr>`;
+      }).join('')}
+      </tbody></table></div>
+    </div>`;
+  }
+
+  document.getElementById('content').innerHTML = html;
+}
+
+// ═══════════════════════════════════
+// CLIENTS
+// ═══════════════════════════════════
+let cSearch = '';
+
+function renderClients() {
+  document.getElementById('topbarActions').innerHTML = `
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input placeholder="Search..." value="${cSearch}" oninput="cSearch=this.value;renderClients()">
+    </div>
+    <button class="btn btn-primary" onclick="openAddClientModal()">+ Add Client</button>`;
+
+  let clients = [...D.clients];
+  if (cSearch) {
+    const q = cSearch.toLowerCase();
+    clients = clients.filter(c => c.name.toLowerCase().includes(q) || (c.phone||'').includes(q));
+  }
+
+  if (!clients.length) {
+    document.getElementById('content').innerHTML = `<div class="empty-state"><h4>No clients</h4><p>Click "+ Add Client" to start</p></div>`;
+    return;
+  }
+
+  // For each client, find active claims to show RS
+  let html = `<div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Name</th><th>Phone / WA</th><th>Policies</th><th>Active Claim / RS</th><th>Last Activity</th><th></th></tr></thead>
+    <tbody>${clients.map(c => {
+      const pCount = (c.policies||[]).length;
+      const lastAct = D.activities.filter(a=>a.clientId===c.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+      // Active claims with RS
+      const activeClaims = D.claims.filter(cl => cl.clientId===c.id && !['Settled','Rejected'].includes(cl.status));
+      const rsNames = [...new Set(activeClaims.map(cl=>cl.rsName).filter(Boolean))];
+      const rsHtml = rsNames.length ? rsNames.map(r=>`<span class="rs-tag">🏥 ${r}</span>`).join(' ') :
+        (activeClaims.length ? `<span class="badge badge-orange">${activeClaims.length} claim</span>` : '<span class="badge badge-green">OK</span>');
+
+      return `<tr class="clickable" onclick="nav('clientDetail',{clientId:'${c.id}'})">
+        <td style="font-weight:600">${c.name}</td>
+        <td>
+          ${c.phone||'—'}
+          ${c.phone ? `<button class="btn btn-wa btn-xs" style="margin-left:6px" onclick="event.stopPropagation();waLink('${c.phone}','')">💬 WA</button>` : ''}
+        </td>
+        <td>${pCount} polis</td>
+        <td>${rsHtml}</td>
+        <td>${lastAct?fmtShort(lastAct.date):'—'}</td>
+        <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();deleteClient('${c.id}')">✕</button></td>
+      </tr>`;
+    }).join('')}
+    </tbody></table></div></div>`;
+
+  document.getElementById('content').innerHTML = html;
+}
+
+function openAddClientModal(client) {
+  const c = client||{};
+  openModal(`
+    <h3>${c.id?'Edit':'Add'} Client</h3>
+    <div class="form-row"><div class="form-group"><label>Full Name *</label><input id="f_name" value="${c.name||''}" placeholder="Budi Santoso"></div>
+    <div class="form-group"><label>Phone / WA *</label><input id="f_phone" value="${c.phone||''}" placeholder="08xxx"></div></div>
+    <div class="form-row"><div class="form-group"><label>Email</label><input id="f_email" value="${c.email||''}" type="email"></div>
+    <div class="form-group"><label>Date of Birth</label><input id="f_dob" value="${c.dob||''}" type="date"></div></div>
+    <div class="form-group"><label>Address</label><input id="f_addr" value="${c.address||''}"></div>
+    <div class="form-group"><label>Emergency Contact 1 (serumah)</label><input id="f_ec1" value="${c.emergencyContact1||''}" placeholder="Name - Phone"></div>
+    <div class="form-group"><label>Emergency Contact 2 (tidak serumah)</label><input id="f_ec2" value="${c.emergencyContact2||''}" placeholder="Name - Phone"></div>
+    <div class="form-group"><label>Notes</label><textarea id="f_notes">${c.notes||''}</textarea></div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveClient('${c.id||''}')">${c.id?'Update':'Add Client'}</button>
+    </div>`);
+}
+
+function saveClient(id) {
+  const name=document.getElementById('f_name').value.trim();
+  if(!name){toast('Name required');return;}
+  const obj={
+    id:id||uid(), name, phone:document.getElementById('f_phone').value.trim(),
+    email:document.getElementById('f_email').value.trim(), dob:document.getElementById('f_dob').value,
+    address:document.getElementById('f_addr').value.trim(),
+    emergencyContact1:document.getElementById('f_ec1').value.trim(),
+    emergencyContact2:document.getElementById('f_ec2').value.trim(),
+    notes:document.getElementById('f_notes').value.trim(), policies:[]
+  };
+  if(id){ const i=D.clients.findIndex(c=>c.id===id); if(i>=0){obj.policies=D.clients[i].policies||[];D.clients[i]=obj;} }
+  else { D.clients.push(obj); addActivity(obj.id,obj.name,'other',`New client: ${name}`); }
+  save(); closeModal(); toast(id?'Updated':'Client added'); nav(navHistory[navIndex]?.page||'clients', navHistory[navIndex]?.opts);
+}
+
+function deleteClient(id) {
+  if(!confirm('Delete this client and all data?'))return;
+  D.clients=D.clients.filter(c=>c.id!==id);
+  D.activities=D.activities.filter(a=>a.clientId!==id);
+  D.claims=D.claims.filter(c=>c.clientId!==id);
+  D.followups=D.followups.filter(f=>f.clientId!==id);
+  save();toast('Deleted');nav('clients');
+}
+
+// ═══════════════════════════════════
+// CLIENT DETAIL
+// ═══════════════════════════════════
+function renderClientDetail(clientId) {
+  const c = D.clients.find(cl=>cl.id===clientId);
+  if(!c){nav('clients');return;}
+
+  document.getElementById('pageTitle').textContent = c.name;
+  document.getElementById('topbarActions').innerHTML = `
+    ${c.phone?`<button class="btn btn-wa" onclick="waLink('${c.phone}','')">💬 WhatsApp</button>`:''}
+    <button class="btn btn-secondary" onclick="openAddClientModal(D.clients.find(c=>c.id==='${c.id}'))">Edit</button>`;
+
+  const policies = c.policies||[];
+  const claims = D.claims.filter(cl=>cl.clientId===c.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const followups = D.followups.filter(f=>f.clientId===c.id).sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate));
+  const activities = D.activities.filter(a=>a.clientId===c.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  // 30/90-day control check
+  const settledInpatient = claims.filter(cl => cl.status==='Settled' && cl.serviceType==='Rawat Inap' && cl.dischargeDate);
+  let controlHtml = '';
+  settledInpatient.forEach(cl => {
+    const daysSince = -daysFrom(cl.dischargeDate);
+    if (daysSince>=0 && daysSince<=90) {
+      controlHtml += `<div class="control-banner">
+        ⏰ <strong>Kontrol pasca rawat inap</strong> — ${daysSince} hari sejak pulang (${fmtDate(cl.dischargeDate)}).
+        Rawat jalan kontrol dicover dalam 90 hari. RS: ${cl.rsName||'—'}
+      </div>`;
+    }
+  });
+
+  let html = `
+    <div class="detail-meta">
+      <div class="detail-meta-item"><div class="label">Phone/WA</div><div class="val">${c.phone||'—'}</div></div>
+      <div class="detail-meta-item"><div class="label">Email</div><div class="val">${c.email||'—'}</div></div>
+      <div class="detail-meta-item"><div class="label">DOB</div><div class="val">${fmtDate(c.dob)}</div></div>
+      <div class="detail-meta-item"><div class="label">Address</div><div class="val">${c.address||'—'}</div></div>
+      ${c.emergencyContact1?`<div class="detail-meta-item"><div class="label">Emergency 1</div><div class="val">${c.emergencyContact1}</div></div>`:''}
+      ${c.emergencyContact2?`<div class="detail-meta-item"><div class="label">Emergency 2</div><div class="val">${c.emergencyContact2}</div></div>`:''}
+    </div>
+    ${controlHtml}
+
+    <!-- POLICIES -->
+    <div class="card">
+      <div class="card-header"><h3>Policies (${policies.length})</h3>
+        <button class="btn btn-sm btn-primary" onclick="openPolicyModal('${c.id}')">+ Add Policy</button></div>
+      ${!policies.length?'<p style="color:var(--text-dim);font-size:12px">No policies.</p>':`
+      <div class="table-wrap"><table><thead><tr><th>Policy No</th><th>Product</th><th>Premium</th><th>Status</th><th>Due</th><th></th></tr></thead>
+      <tbody>${policies.map((p,i)=>`<tr>
+        <td style="font-weight:600">${p.policyNo||'—'}</td><td>${p.product||'—'}</td>
+        <td>${rupiah(p.premium)}</td>
+        <td><span class="badge ${p.status==='Active'?'badge-green':p.status==='Lapsed'?'badge-red':'badge-yellow'}">${p.status||'Active'}</span></td>
+        <td>${fmtDate(p.dueDate)}</td>
+        <td><button class="btn btn-ghost btn-xs" onclick="D.clients.find(c=>c.id==='${c.id}').policies.splice(${i},1);save();toast('Removed');renderClientDetail('${c.id}')">✕</button></td>
+      </tr>`).join('')}</tbody></table></div>`}
+    </div>
+
+    <!-- CLAIMS -->
+    <div class="card">
+      <div class="card-header"><h3>Claims (${claims.length})</h3>
+        <button class="btn btn-sm btn-primary" onclick="openClaimModal('${c.id}')">+ New Claim</button></div>
+      ${!claims.length?'<p style="color:var(--text-dim);font-size:12px">No claims.</p>':
+        claims.map(cl => `
+          <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+              <div>
+                <span style="font-weight:600;font-size:13px">${cl.serviceType||'Claim'} — ${cl.type||''}</span>
+                <span class="badge ${cl.method==='Cashless'?'badge-teal':'badge-purple'}" style="margin-left:6px">${cl.method||'—'}</span>
+                <span class="badge ${cl.status==='Settled'?'badge-green':cl.status==='Rejected'?'badge-red':'badge-orange'}" style="margin-left:4px">${cl.status}</span>
+              </div>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-ghost btn-xs" onclick="openClaimModal('${c.id}','${cl.id}')">✎ Edit</button>
+                <button class="btn btn-ghost btn-xs" onclick="openClaimStepModal('${cl.id}')">📋 Update Step</button>
+              </div>
+            </div>
+            ${cl.rsName?`<div style="margin-top:6px"><span class="rs-tag">🏥 ${cl.rsName}</span></div>`:''}
+            <div style="margin-top:4px;font-size:12px;color:var(--text-muted)">
+              ${fmtDate(cl.date)} · ${rupiah(cl.amount)}
+              ${cl.dischargeDate?' · Pulang: '+fmtDate(cl.dischargeDate):''}
+            </div>
+            ${renderPipeline(cl)}
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px">
+              ${cl.skdCount?`SKD: ${cl.skdCount} lembar`:''}
+              ${cl.jneResi?` · Resi JNE: ${cl.jneResi}`:''}
+            </div>
+            ${cl.notes?`<div style="font-size:12px;color:var(--text-muted);margin-top:4px;white-space:pre-wrap">${cl.notes}</div>`:''}
+          </div>
+        `).join('')}
+    </div>
+
+    <!-- FOLLOW-UPS -->
+    <div class="card">
+      <div class="card-header"><h3>Follow-ups (${followups.length})</h3>
+        <button class="btn btn-sm btn-primary" onclick="openFollowupModal('${c.id}')">+ Add</button></div>
+      ${!followups.length?'<p style="color:var(--text-dim);font-size:12px">No follow-ups.</p>':`
+      <div class="table-wrap"><table><thead><tr><th>Due</th><th>Task</th><th>Status</th><th></th></tr></thead>
+      <tbody>${followups.map(f=>{
+        const d=daysFrom(f.dueDate); const ov=d<0&&f.status!=='Done';
+        return `<tr>
+          <td style="${ov?'color:var(--red)':''}">${fmtShort(f.dueDate)} ${ov?'⚠':''}</td>
+          <td>${f.task}</td>
+          <td><select onchange="updFUStatus('${f.id}',this.value)" style="padding:3px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;font-family:inherit">
+            <option ${f.status==='Pending'?'selected':''}>Pending</option>
+            <option ${f.status==='In Progress'?'selected':''}>In Progress</option>
+            <option ${f.status==='Done'?'selected':''}>Done</option>
+          </select></td>
+          <td><button class="btn btn-ghost btn-xs" onclick="D.followups=D.followups.filter(x=>x.id!=='${f.id}');save();toast('Removed');renderClientDetail('${c.id}')">✕</button></td>
+        </tr>`;}).join('')}</tbody></table></div>`}
+    </div>
+
+    <!-- ACTIVITY LOG -->
+    <div class="card">
+      <div class="card-header"><h3>Activity Log</h3>
+        <button class="btn btn-sm btn-primary" onclick="openActivityModal('${c.id}')">+ Log</button></div>
+      ${!activities.length?'<p style="color:var(--text-dim);font-size:12px">No activity.</p>':
+        activities.slice(0,20).map(a=>{
+          const colors={call:'var(--green)',note:'var(--accent)',claim:'var(--orange)',policy:'var(--purple)',followup:'var(--yellow)',other:'var(--text-dim)'};
+          return `<div class="activity-item">
+            <div class="activity-dot" style="background:${colors[a.type]||colors.other}"></div>
+            <div class="activity-content"><div class="text">${a.text}</div><div class="meta">${fmtDate(a.date)}</div></div>
+            <div style="display:flex;gap:4px;flex-shrink:0;align-self:center">
+              <button class="btn btn-ghost btn-xs" onclick="openEditActivityModal('${a.id}','${c.id}')" title="Edit">✎</button>
+              <button class="btn btn-ghost btn-xs" onclick="deleteActivity('${a.id}','${c.id}')" title="Delete">✕</button>
+            </div>
+          </div>`;
+        }).join('')}
+    </div>`;
+
+  document.getElementById('content').innerHTML = html;
+}
+
+// ═══════════════════════════════════
+// POLICY MODAL
+// ═══════════════════════════════════
+function openPolicyModal(cid) {
+  openModal(`<h3>Add Policy</h3>
+    <div class="form-row"><div class="form-group"><label>Policy Number</label><input id="f_pno" placeholder="POL-123456"></div>
+    <div class="form-group"><label>Product</label><select id="f_prod">
+      <option>PruWell Medical</option><option>PruWell Hospital</option><option>PRULink</option><option>PRUCritical</option><option>PRUSolusi Sehat</option><option>Other</option>
+    </select></div></div>
+    <div class="form-row"><div class="form-group"><label>Premium (Rp)</label><input id="f_prem" type="number" placeholder="500000"></div>
+    <div class="form-group"><label>Status</label><select id="f_pstat"><option>Active</option><option>Lapsed</option><option>Paid Up</option><option>Pending</option></select></div></div>
+    <div class="form-group"><label>Next Due Date</label><input id="f_pdue" type="date"></div>
+    <div class="form-actions"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="savePol('${cid}')">Save</button></div>`);
+}
+
+function savePol(cid) {
+  const c=D.clients.find(x=>x.id===cid); if(!c)return; if(!c.policies) c.policies=[];
+  c.policies.push({ policyNo:document.getElementById('f_pno').value.trim(), product:document.getElementById('f_prod').value,
+    premium:document.getElementById('f_prem').value, status:document.getElementById('f_pstat').value, dueDate:document.getElementById('f_pdue').value });
+  addActivity(cid,c.name,'policy','Policy added: '+document.getElementById('f_pno').value.trim());
+  save();closeModal();toast('Policy added');renderClientDetail(cid);
+}
+
+// ═══════════════════════════════════
+// CLAIM MODAL — Insurance Specific
+// ═══════════════════════════════════
+function openClaimModal(cid, claimId) {
+  const ex = claimId ? D.claims.find(c=>c.id===claimId) : null;
+  const cl = ex||{};
+  const isEdit = !!cl.id;
+
+  openModal(`<h3>${isEdit?'Edit':'New'} Claim</h3>
+    <div class="form-row-3">
+      <div class="form-group"><label>Service Type *</label>
+        <select id="f_svc" onchange="toggleClaimFields()">
+          <option ${cl.serviceType==='Rawat Inap'?'selected':''}>Rawat Inap</option>
+          <option ${cl.serviceType==='Rawat Jalan'?'selected':''}>Rawat Jalan</option>
+          <option ${cl.serviceType==='Pre-Rawat Inap'?'selected':''}>Pre-Rawat Inap</option>
+          <option ${cl.serviceType==='Post-Rawat Inap'?'selected':''}>Post-Rawat Inap</option>
+          <option ${cl.serviceType==='Bedah Rawat Jalan'?'selected':''}>Bedah Rawat Jalan</option>
+        </select></div>
+      <div class="form-group"><label>Method *</label>
+        <select id="f_method" onchange="toggleClaimFields()">
+          <option ${cl.method==='Cashless'?'selected':''}>Cashless</option>
+          <option ${cl.method==='Reimbursement'?'selected':''}>Reimbursement</option>
+        </select></div>
+      <div class="form-group"><label>Claim Type</label>
+        <select id="f_ctype"><option ${cl.type==='Health'?'selected':''}>Health</option><option ${cl.type==='Accident'?'selected':''}>Accident</option>
+        <option ${cl.type==='Critical Illness'?'selected':''}>Critical Illness</option><option ${cl.type==='Maternity'?'selected':''}>Maternity</option><option ${cl.type==='Other'?'selected':''}>Other</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input id="f_cdate" type="date" value="${cl.date||today()}"></div>
+      <div class="form-group"><label>Amount (Rp)</label><input id="f_camt" type="number" value="${cl.amount||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Rumah Sakit (RS)</label><input id="f_rs" value="${cl.rsName||''}" placeholder="e.g. RS Pondok Indah"></div>
+      <div class="form-group"><label>Nama Dokter</label><input id="f_doc" value="${cl.doctorName||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Diagnosa Utama</label><input id="f_diag" value="${cl.diagnosis||''}"></div>
+      <div class="form-group"><label>Diagnosa Tambahan</label><input id="f_diag2" value="${cl.diagnosis2||''}"></div>
+    </div>
+
+    <div id="cashlessFields" style="display:none">
+      <div class="form-row"><div class="form-group"><label>Tanggal Masuk RS</label><input id="f_admit" type="date" value="${cl.admitDate||''}"></div>
+      <div class="form-group"><label>Tanggal Pulang</label><input id="f_discharge" type="date" value="${cl.dischargeDate||''}"></div></div>
+      <div class="form-group"><label>Jenis Kamar</label><input id="f_room" value="${cl.roomType||''}" placeholder="e.g. VIP, Kelas 1"></div>
+    </div>
+
+    <div id="reimbFields" style="display:none">
+      <div class="form-row"><div class="form-group"><label>Jumlah SKD</label><input id="f_skd" type="number" value="${cl.skdCount||''}" placeholder="1 SKD per hari perawatan"></div>
+      <div class="form-group"><label>Resi JNE</label><input id="f_jne" value="${cl.jneResi||''}" placeholder="Tracking number"></div></div>
+      <div class="form-hint">Kirim dokumen ke: Gedung APL Tower Lt.41, Jl. Let Jend S Parman Kav 28, Jakarta Barat. Attn: Eny</div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group"><label>Status</label>
+        <select id="f_cstat"><option ${cl.status==='Submitted'?'selected':''}>Submitted</option>
+        <option ${cl.status==='SKD Pending'?'selected':''}>SKD Pending</option>
+        <option ${cl.status==='Jaminan Awal'?'selected':''}>Jaminan Awal</option>
+        <option ${cl.status==='In Review'?'selected':''}>In Review</option>
+        <option ${cl.status==='Klarifikasi'?'selected':''}>Klarifikasi</option>
+        <option ${cl.status==='Approved'?'selected':''}>Approved</option>
+        <option ${cl.status==='Jaminan Akhir'?'selected':''}>Jaminan Akhir</option>
+        <option ${cl.status==='Settled'?'selected':''}>Settled</option>
+        <option ${cl.status==='Rejected'?'selected':''}>Rejected</option></select></div>
+      <div class="form-group"><label>Current Step</label>
+        <select id="f_step"><option value="">— auto —</option></select>
+        <div class="form-hint">Will auto-populate based on method</div></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="f_cnotes">${cl.notes||''}</textarea></div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      ${isEdit?`<button class="btn btn-danger" onclick="delClaim('${cl.id}','${cid}')">Delete</button>`:''}
+      <button class="btn btn-primary" onclick="saveClaim('${cid}','${cl.id||''}')">${isEdit?'Update':'Add Claim'}</button>
+    </div>
+    <script>toggleClaimFields();<\/script>`);
+
+  // need to call after DOM is set
+  setTimeout(()=>toggleClaimFields(),50);
+}
+
+function toggleClaimFields() {
+  const method = document.getElementById('f_method')?.value;
+  const cf = document.getElementById('cashlessFields');
+  const rf = document.getElementById('reimbFields');
+  if (cf) cf.style.display = method==='Cashless'?'block':'none';
+  if (rf) rf.style.display = method==='Reimbursement'?'block':'none';
+
+  // Populate step options
+  const stepSel = document.getElementById('f_step');
+  if (!stepSel) return;
+  const steps = method==='Cashless'?CLAIM_STEPS_CASHLESS:CLAIM_STEPS_REIMBURSE;
+  stepSel.innerHTML = '<option value="">— auto —</option>' + steps.map(s=>`<option>${s}</option>`).join('');
+}
+
+function saveClaim(cid, claimId) {
+  const client = D.clients.find(c=>c.id===cid);
+  const method = document.getElementById('f_method').value;
+  const steps = method==='Cashless'?CLAIM_STEPS_CASHLESS:CLAIM_STEPS_REIMBURSE;
+  let step = document.getElementById('f_step').value;
+  if (!step) step = steps[0];
+
+  const obj = {
+    id: claimId||uid(), clientId:cid, clientName:client?.name||'?',
+    serviceType: document.getElementById('f_svc').value,
+    method,
+    type: document.getElementById('f_ctype').value,
+    date: document.getElementById('f_cdate').value,
+    amount: document.getElementById('f_camt').value,
+    rsName: document.getElementById('f_rs').value.trim(),
+    doctorName: document.getElementById('f_doc').value.trim(),
+    diagnosis: document.getElementById('f_diag').value.trim(),
+    diagnosis2: document.getElementById('f_diag2').value.trim(),
+    admitDate: document.getElementById('f_admit')?.value||'',
+    dischargeDate: document.getElementById('f_discharge')?.value||'',
+    roomType: document.getElementById('f_room')?.value||'',
+    skdCount: document.getElementById('f_skd')?.value||'',
+    jneResi: document.getElementById('f_jne')?.value||'',
+    status: document.getElementById('f_cstat').value,
+    currentStep: step,
+    notes: document.getElementById('f_cnotes').value.trim()
+  };
+
+  if (claimId) {
+    const i=D.claims.findIndex(c=>c.id===claimId);
+    if(i>=0) D.claims[i]=obj;
+    addActivity(cid,obj.clientName,'claim',`Claim updated: ${obj.serviceType} ${obj.method} — ${obj.status}`);
+  } else {
+    D.claims.push(obj);
+    addActivity(cid,obj.clientName,'claim',`New claim: ${obj.serviceType} ${obj.method} at ${obj.rsName||'—'}`);
+
+    // Auto-create follow-up for claim tracking
+    D.followups.push({
+      id:uid(), clientId:cid, clientName:obj.clientName,
+      task:`Track claim ${obj.serviceType} ${obj.method} — ${obj.rsName||''}`,
+      dueDate: new Date(Date.now()+3*864e5).toISOString().slice(0,10),
+      priority:'High', status:'Pending', notes:''
+    });
+  }
+
+  save();closeModal();toast(claimId?'Updated':'Claim added');renderClientDetail(cid);
+}
+
+function openClaimStepModal(claimId) {
+  const cl = D.claims.find(c=>c.id===claimId);
+  if (!cl) return;
+  const steps = getSteps(cl);
+  openModal(`<h3>Update Claim Step</h3>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">${cl.clientName} — ${cl.serviceType} ${cl.method} at ${cl.rsName||'—'}</p>
+    ${renderPipeline(cl)}
+    <div class="form-group" style="margin-top:14px"><label>Move to Step</label>
+      <select id="f_newstep">${steps.map(s=>`<option ${cl.currentStep===s?'selected':''}>${s}</option>`).join('')}</select></div>
+    <div class="form-group"><label>Update Status</label>
+      <select id="f_newstat"><option ${cl.status==='Submitted'?'selected':''}>Submitted</option>
+      <option ${cl.status==='SKD Pending'?'selected':''}>SKD Pending</option>
+      <option ${cl.status==='Jaminan Awal'?'selected':''}>Jaminan Awal</option>
+      <option ${cl.status==='In Review'?'selected':''}>In Review</option>
+      <option ${cl.status==='Klarifikasi'?'selected':''}>Klarifikasi</option>
+      <option ${cl.status==='Approved'?'selected':''}>Approved</option>
+      <option ${cl.status==='Jaminan Akhir'?'selected':''}>Jaminan Akhir</option>
+      <option ${cl.status==='Settled'?'selected':''}>Settled</option>
+      <option ${cl.status==='Rejected'?'selected':''}>Rejected</option></select></div>
+    <div class="form-group"><label>Add Note</label><textarea id="f_stepnote" placeholder="e.g. RS sudah kirim dokumen ke Prudential"></textarea></div>
+    <div class="form-actions"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="updateClaimStep('${cl.id}')">Update</button></div>`);
+}
+
+function updateClaimStep(claimId) {
+  const cl = D.claims.find(c=>c.id===claimId);
+  if (!cl) return;
+  cl.currentStep = document.getElementById('f_newstep').value;
+  cl.status = document.getElementById('f_newstat').value;
+  const note = document.getElementById('f_stepnote').value.trim();
+  if (note) { cl.notes = (cl.notes?cl.notes+'\n':'')+`[${fmtShort(new Date())}] ${note}`; }
+  addActivity(cl.clientId,cl.clientName,'claim',`Claim step: ${cl.currentStep} — ${cl.status}${note?' — '+note:''}`);
+
+  // Auto follow-up for 30-day control if settled inpatient
+  if (cl.status==='Settled' && cl.serviceType==='Rawat Inap' && cl.dischargeDate) {
+    const controlDate = new Date(new Date(cl.dischargeDate).getTime()+30*864e5).toISOString().slice(0,10);
+    D.followups.push({
+      id:uid(), clientId:cl.clientId, clientName:cl.clientName,
+      task:`Kontrol 30 hari pasca rawat inap — ${cl.rsName||'RS'}`,
+      dueDate:controlDate, priority:'High', status:'Pending', notes:'Kontrol rawat jalan dicover 90 hari setelah rawat inap'
+    });
+  }
+
+  save();closeModal();toast('Step updated');renderClientDetail(cl.clientId);
+}
+
+function delClaim(claimId, cid) {
+  D.claims=D.claims.filter(c=>c.id!==claimId);save();closeModal();toast('Deleted');renderClientDetail(cid);
+}
+
+// ═══════════════════════════════════
+// CLAIMS PAGE
+// ═══════════════════════════════════
+let claimFilter = 'all';
+
+function renderClaims() {
+  document.getElementById('topbarActions').innerHTML = '';
+  const all = [...D.claims].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const pending = all.filter(c=>!['Settled','Rejected'].includes(c.status));
+  const settled = all.filter(c=>c.status==='Settled');
+
+  let filtered = claimFilter==='all'?all: claimFilter==='pending'?pending: claimFilter==='settled'?settled: all.filter(c=>c.status===claimFilter);
+
+  let html = `
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Total Claims</div><div class="value">${all.length}</div></div>
+      <div class="stat-card"><div class="label">Pending</div><div class="value" style="color:var(--orange)">${pending.length}</div></div>
+      <div class="stat-card"><div class="label">Settled</div><div class="value" style="color:var(--green)">${settled.length}</div></div>
+      <div class="stat-card"><div class="label">Total Settled</div><div class="value">${rupiah(settled.reduce((s,c)=>s+Number(c.amount||0),0))}</div></div>
+    </div>
+    <div class="filter-row">
+      <select onchange="claimFilter=this.value;renderClaims()">
+        <option value="all" ${claimFilter==='all'?'selected':''}>All</option>
+        <option value="pending" ${claimFilter==='pending'?'selected':''}>Pending</option>
+        <option value="settled" ${claimFilter==='settled'?'selected':''}>Settled</option>
+      </select>
+    </div>`;
+
+  if (!filtered.length) { html += '<div class="empty-state"><h4>No claims</h4></div>'; }
+  else {
+    html += filtered.map(cl => `
+      <div class="card" style="cursor:pointer" onclick="nav('clientDetail',{clientId:'${cl.clientId}'})">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+          <div>
+            <span style="font-weight:600">${cl.clientName}</span>
+            <span class="badge ${cl.method==='Cashless'?'badge-teal':'badge-purple'}" style="margin-left:6px">${cl.method}</span>
+            <span class="badge ${cl.status==='Settled'?'badge-green':cl.status==='Rejected'?'badge-red':'badge-orange'}" style="margin-left:4px">${cl.status}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted)">${fmtDate(cl.date)} · ${rupiah(cl.amount)}</div>
+        </div>
+        ${cl.rsName?`<span class="rs-tag" style="margin-top:6px">🏥 ${cl.rsName}</span>`:''}
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">${cl.serviceType} · ${cl.diagnosis||'—'}</div>
+        ${renderPipeline(cl)}
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('content').innerHTML = html;
+}
+
+// ═══════════════════════════════════
+// FOLLOW-UPS
+// ═══════════════════════════════════
+function openFollowupModal(cid) {
+  const clients = D.clients;
+  openModal(`<h3>Add Follow-up</h3>
+    ${cid?'':`<div class="form-group"><label>Client *</label><select id="f_fclient"><option value="">Select...</option>${clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>`}
+    <div class="form-group"><label>Task *</label><input id="f_ftask" placeholder="e.g. Follow up premium, Claim status check"></div>
+    <div class="form-row"><div class="form-group"><label>Due Date *</label><input id="f_fdate" type="date" value="${today()}"></div>
+    <div class="form-group"><label>Priority</label><select id="f_fpri"><option>Normal</option><option>High</option><option>Urgent</option></select></div></div>
+    <div class="form-group"><label>Notes</label><textarea id="f_fnotes"></textarea></div>
+    <div class="form-actions"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveFU('${cid||''}')">Add</button></div>`);
+}
+
+function saveFU(cid) {
+  const id = cid||document.getElementById('f_fclient')?.value;
+  if(!id){toast('Select client');return;}
+  const task=document.getElementById('f_ftask').value.trim();
+  if(!task){toast('Task required');return;}
+  const client=D.clients.find(c=>c.id===id);
+  D.followups.push({ id:uid(), clientId:id, clientName:client?.name||'?', task,
+    dueDate:document.getElementById('f_fdate').value, priority:document.getElementById('f_fpri').value,
+    notes:document.getElementById('f_fnotes').value.trim(), status:'Pending' });
+  addActivity(id,client?.name||'?','followup','Follow-up: '+task);
+  save();closeModal();toast('Added');
+  const cur = navHistory[navIndex]; renderPage(cur?.page||'followups', cur?.opts);
+}
+
+function updFUStatus(fuId, status) {
+  const f=D.followups.find(x=>x.id===fuId); if(!f)return;
+  f.status=status;
+  if(status==='Done') addActivity(f.clientId,f.clientName,'followup','Completed: '+f.task);
+  save();toast('Updated');
+}
+
+function renderFollowups() {
+  document.getElementById('topbarActions').innerHTML = `<button class="btn btn-primary" onclick="openFollowupModal()">+ Add Follow-up</button>`;
+  const all=[...D.followups].sort((a,b)=>{
+    if(a.status==='Done'&&b.status!=='Done')return 1;if(a.status!=='Done'&&b.status==='Done')return -1;
+    return new Date(a.dueDate)-new Date(b.dueDate);
+  });
+
+  if(!all.length){ document.getElementById('content').innerHTML='<div class="empty-state"><h4>No follow-ups</h4></div>'; return; }
+
+  let html=`<div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Client</th><th>Task</th><th>Due</th><th>Priority</th><th>Status</th><th></th><th></th></tr></thead>
+    <tbody>${all.map(f=>{
+      const d=daysFrom(f.dueDate); const ov=d<0&&f.status!=='Done';
+      const client=D.clients.find(c=>c.id===f.clientId);
+      let lbl=d<0?Math.abs(d)+'d overdue':d===0?'Today':d+'d';
+      let bc=d<0?'badge-red':d<=2?'badge-orange':'badge-blue';
+      const pri={Urgent:'badge-red',High:'badge-orange',Normal:'badge-blue'};
+      return `<tr class="clickable" onclick="nav('clientDetail',{clientId:'${f.clientId}'})">
+        <td style="font-weight:600">${f.clientName}</td><td>${f.task}</td>
+        <td><span class="badge ${bc}">${lbl}</span></td>
+        <td><span class="badge ${pri[f.priority]||'badge-blue'}">${f.priority}</span></td>
+        <td><select onclick="event.stopPropagation()" onchange="updFUStatus('${f.id}',this.value);renderFollowups()" style="padding:3px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;font-family:inherit">
+          <option ${f.status==='Pending'?'selected':''}>Pending</option><option ${f.status==='In Progress'?'selected':''}>In Progress</option><option ${f.status==='Done'?'selected':''}>Done</option>
+        </select></td>
+        <td>${client?.phone?`<button class="btn btn-wa btn-xs" onclick="event.stopPropagation();waLink('${client.phone}','Halo ${client.name}, saya ingin follow up mengenai: ${f.task}')">WA</button>`:''}</td>
+        <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();D.followups=D.followups.filter(x=>x.id!=='${f.id}');save();renderFollowups()">✕</button></td>
+      </tr>`;
+    }).join('')}</tbody></table></div></div>`;
+
+  document.getElementById('content').innerHTML=html;
+}
+
+// ═══════════════════════════════════
+// ACTIVITY MODAL
+// ═══════════════════════════════════
+function openActivityModal(cid) {
+  const client=D.clients.find(c=>c.id===cid);
+  openModal(`<h3>Log Activity — ${client?.name||''}</h3>
+    <div class="form-group"><label>Type</label><select id="f_atype">
+      <option value="call">Phone / WA Call</option><option value="note">Note / WA Chat</option>
+      <option value="claim">Claim Update</option><option value="policy">Policy Update</option>
+      <option value="followup">Follow-up</option><option value="other">Other</option></select></div>
+    <div class="form-group"><label>Description *</label><textarea id="f_atext" placeholder="e.g. Client confirmed transfer. RS sudah kirim jaminan awal."></textarea></div>
+    <div class="form-group"><label>Date</label><input id="f_adate" type="datetime-local" value="${new Date().toISOString().slice(0,16)}"></div>
+    <div class="form-actions"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveAct('${cid}')">Log</button></div>`);
+}
+
+function saveAct(cid) {
+  const text=document.getElementById('f_atext').value.trim();
+  if(!text){toast('Description required');return;}
+  const client=D.clients.find(c=>c.id===cid);
+  D.activities.push({ id:uid(), clientId:cid, clientName:client?.name||'?', type:document.getElementById('f_atype').value, text, date:document.getElementById('f_adate').value||new Date().toISOString() });
+  save();closeModal();toast('Logged');renderClientDetail(cid);
+}
+
+function openEditActivityModal(actId, cid) {
+  const a = D.activities.find(x=>x.id===actId);
+  if(!a) return;
+  openModal(`<h3>Edit Activity</h3>
+    <div class="form-group"><label>Type</label><select id="f_atype">
+      <option value="call" ${a.type==='call'?'selected':''}>Phone / WA Call</option>
+      <option value="note" ${a.type==='note'?'selected':''}>Note / WA Chat</option>
+      <option value="claim" ${a.type==='claim'?'selected':''}>Claim Update</option>
+      <option value="policy" ${a.type==='policy'?'selected':''}>Policy Update</option>
+      <option value="followup" ${a.type==='followup'?'selected':''}>Follow-up</option>
+      <option value="other" ${a.type==='other'?'selected':''}>Other</option></select></div>
+    <div class="form-group"><label>Description *</label><textarea id="f_atext">${a.text||''}</textarea></div>
+    <div class="form-group"><label>Date</label><input id="f_adate" type="datetime-local" value="${(a.date||'').slice(0,16)}"></div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="updateActivity('${actId}','${cid}')">Save</button>
+    </div>`);
+}
+
+function updateActivity(actId, cid) {
+  const a = D.activities.find(x=>x.id===actId);
+  if(!a) return;
+  const text=document.getElementById('f_atext').value.trim();
+  if(!text){toast('Description required');return;}
+  a.type = document.getElementById('f_atype').value;
+  a.text = text;
+  a.date = document.getElementById('f_adate').value||a.date;
+  save();closeModal();toast('Activity updated');renderClientDetail(cid);
+}
+
+function deleteActivity(actId, cid) {
+  if(!confirm('Delete this activity log?')) return;
+  D.activities = D.activities.filter(x=>x.id!==actId);
+  save();toast('Activity deleted');renderClientDetail(cid);
+}
+
+// ═══════════════════════════════════
+// WA REPORT
+// ═══════════════════════════════════
+function renderReport() {
+  document.getElementById('topbarActions').innerHTML='';
+  const weekAgo=new Date(Date.now()-7*864e5).toISOString().slice(0,10);
+  let html=`<div class="card">
+    <div class="card-header"><h3>Generate WhatsApp Report for Leader</h3></div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Auto-generate a formatted summary to copy & send via WhatsApp.</p>
+    <div class="form-row">
+      <div class="form-group"><label>From</label><input id="rpt_from" type="date" value="${weekAgo}"></div>
+      <div class="form-group"><label>To</label><input id="rpt_to" type="date" value="${today()}"></div>
+    </div>
+    <div class="form-group"><label>Include</label>
+      <div style="display:flex;gap:14px;margin-top:4px;flex-wrap:wrap">
+        <label style="font-size:12px;display:flex;gap:5px;cursor:pointer;color:var(--text-muted)"><input type="checkbox" id="rpt_act" checked> Activities</label>
+        <label style="font-size:12px;display:flex;gap:5px;cursor:pointer;color:var(--text-muted)"><input type="checkbox" id="rpt_cl" checked> Claims</label>
+        <label style="font-size:12px;display:flex;gap:5px;cursor:pointer;color:var(--text-muted)"><input type="checkbox" id="rpt_fu" checked> Follow-ups</label>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="margin-top:10px" onclick="genReport()">Generate Report</button>
+  </div><div id="rptOut"></div>`;
+  document.getElementById('content').innerHTML=html;
+}
+
+function genReport() {
+  const from=document.getElementById('rpt_from').value, to=document.getElementById('rpt_to').value;
+  const iA=document.getElementById('rpt_act').checked, iC=document.getElementById('rpt_cl').checked, iF=document.getElementById('rpt_fu').checked;
+  const s=D.settings||{};
+  let L=[];
+  L.push(`📋 *LAPORAN RM — ${s.rmName||'RM'}*`);
+  L.push(`Periode: ${fmtDate(from)} — ${fmtDate(to)}`);
+  L.push(`Tanggal: ${fmtDate(today())}`);
+  L.push('─────────────────');
+
+  if(iA){
+    const acts=D.activities.filter(a=>a.date>=from&&a.date<=to+'T23:59:59').sort((a,b)=>new Date(b.date)-new Date(a.date));
+    L.push(''); L.push(`📝 *AKTIVITAS (${acts.length})*`);
+    if(!acts.length) L.push('Tidak ada aktivitas.');
+    else {
+      const grouped={};
+      acts.forEach(a=>{if(!grouped[a.clientName])grouped[a.clientName]=[];grouped[a.clientName].push(a);});
+      for(const[name,items]of Object.entries(grouped)){
+        L.push(`\n👤 *${name}*`);
+        items.forEach(a=>L.push(`  • ${fmtShort(a.date)}: ${a.text}`));
+      }
+    }
+  }
+
+  if(iC){
+    const cls=D.claims.filter(c=>c.date>=from&&c.date<=to);
+    const pending=D.claims.filter(c=>!['Settled','Rejected'].includes(c.status));
+    L.push(''); L.push('─────────────────');
+    L.push(`🏥 *KLAIM*`);
+    L.push(`Klaim periode ini: ${cls.length} | Pending total: ${pending.length}`);
+    cls.forEach(c=>L.push(`  • ${c.clientName} — ${c.serviceType} ${c.method} — ${c.rsName||'—'} — *${c.status}* — ${c.currentStep||''}`));
+    if(pending.length){ L.push('\n⚠️ *Pending:*'); pending.forEach(c=>L.push(`  • ${c.clientName} — ${c.rsName||'—'} — ${c.currentStep} (${c.status})`)); }
+  }
+
+  if(iF){
+    const overdue=D.followups.filter(f=>f.status!=='Done'&&daysFrom(f.dueDate)<0);
+    const upcoming=D.followups.filter(f=>f.status!=='Done'&&daysFrom(f.dueDate)>=0&&daysFrom(f.dueDate)<=7);
+    L.push(''); L.push('─────────────────');
+    L.push(`⏰ *FOLLOW-UP*`);
+    L.push(`Overdue: ${overdue.length} | Upcoming 7 hari: ${upcoming.length}`);
+    if(overdue.length){ L.push('\n⚠️ *Overdue:*'); overdue.forEach(f=>L.push(`  • ${f.clientName} — ${f.task} (${fmtShort(f.dueDate)})`)); }
+    if(upcoming.length){ L.push('\n📅 *Upcoming:*'); upcoming.forEach(f=>L.push(`  • ${f.clientName} — ${f.task} (${fmtShort(f.dueDate)})`)); }
+  }
+
+  L.push(''); L.push('─────────────────');
+  L.push(`Total klien: ${D.clients.length}`);
+  L.push(`Polis aktif: ${D.clients.reduce((a,c)=>a+(c.policies||[]).filter(p=>p.status==='Active').length,0)}`);
+  L.push(''); L.push(`Terima kasih 🙏`); L.push(`_${s.rmName||'RM'}_`);
+
+  const report = L.join('\n');
+  document.getElementById('rptOut').innerHTML=`<div class="card">
+    <div class="card-header"><h3>Preview</h3>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('waRpt').textContent).then(()=>toast('Copied!'))">📋 Copy</button>
+        <button class="btn btn-wa btn-sm" onclick="window.open('https://wa.me/?text='+encodeURIComponent(document.getElementById('waRpt').textContent),'_blank')">💬 Send via WA</button>
+      </div>
+    </div>
+    <div class="wa-preview" id="waRpt">${report}</div>
+  </div>`;
+}
+
+// ═══════════════════════════════════
+// CLAIM GUIDE
+// ═══════════════════════════════════
+function renderGuide() {
+  document.getElementById('topbarActions').innerHTML='';
+  document.getElementById('content').innerHTML=`
+    <div class="card">
+      <h3 style="font-family:'Playfair Display',serif;font-size:18px;margin-bottom:16px">Panduan Proses Claim — Quick Reference</h3>
+
+      <div style="margin-bottom:18px">
+        <h4 style="font-size:14px;color:var(--accent);margin-bottom:8px">🏥 CASHLESS (RS Partner)</h4>
+        <div style="font-size:12.5px;color:var(--text-muted);line-height:1.8">
+          <p><strong>Selalu minta RS proses cashless terlebih dahulu.</strong> Jika admin RS bilang tidak bisa, tetap minta diajukan.</p>
+          <p>Parallel contact: Gracia (+62818741186) atau backup Angelia (+62 838-9948-8161)</p>
+          <p>1. Info pakai asuransi, tunjukkan e-Card dari app Pulse</p>
+          <p>2. Tandatangan form jaminan (siap bayar jika ada yg tidak dicover)</p>
+          <p>3. RS siapkan kamar</p>
+          <p>4. Saat pulang: dokter info boleh pulang → suster tunggu obat habis → kembalikan obat tidak terpakai → admin rekap & kirim ke asuransi</p>
+          <p>5. Prudential proses, jika kurang data akan minta ke RS</p>
+        </div>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <h4 style="font-size:14px;color:var(--purple);margin-bottom:8px">📋 REIMBURSEMENT</h4>
+        <div style="font-size:12.5px;color:var(--text-muted);line-height:1.8">
+          <p>Untuk: kecelakaan, pre-rawat inap, atau jika cashless tidak tersedia</p>
+          <p><strong>1. Dokter isi SKD</strong> — foto dulu ke agen untuk di-check. 1 SKD = 1 hari perawatan</p>
+          <p><strong>2. Kirim dokumen via JNE:</strong></p>
+          <p style="padding-left:16px">• SKD Asli • Form claim • Kwitansi asli & bukti bayar • Invoice rincian final • Copy hasil lab/x-ray • Detail rekening pemegang polis • Copy KTP</p>
+          <p><strong>Alamat:</strong> Gedung APL Tower Lt.41, Jl. Let Jend S Parman Kav 28, Grogol Petamburan, Jakarta Barat. Attn: Eny (+62 896-9734-3066)</p>
+          <p>3. Tim akan lengkapi form, kirim ke Prudential, dan info saat diapprove</p>
+        </div>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <h4 style="font-size:14px;color:var(--green);margin-bottom:8px">🚶 RAWAT JALAN — Kapan Dicover?</h4>
+        <div style="font-size:12.5px;color:var(--text-muted);line-height:1.8">
+          <p>✅ Kecelakaan (dalam 48 jam) — ke RS/UGD/dokter</p>
+          <p>✅ Bedah rawat jalan</p>
+          <p>✅ Perawatan kanker / cuci darah</p>
+          <p>✅ Kontrol 90 hari setelah rawat inap</p>
+          <p>❌ Selain di atas: tidak dicover. Tapi simpan kwitansi — jika masuk rawat inap dalam 30 hari dengan diagnosa berhubungan, bisa diklaim.</p>
+        </div>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <h4 style="font-size:14px;color:var(--yellow);margin-bottom:8px">⏳ MASA TUNGGU (PruWell)</h4>
+        <div style="font-size:12.5px;color:var(--text-muted);line-height:1.7">
+          <p>Kecelakaan: Tidak ada masa tunggu</p>
+          <p>Semua kondisi: 30 hari</p>
+          <p>Kanker: 90 hari</p>
+          <p>Kondisi kritis khusus: 12 bulan (hernia, tumor, TB, wasir, tiroid, hipertensi, jantung, katarak, dll)</p>
+          <p>Early claim (polis &lt;24 bulan) untuk kondisi kritis → kemungkinan diproses reimbursement</p>
+        </div>
+      </div>
+
+      <div>
+        <h4 style="font-size:14px;color:var(--teal);margin-bottom:8px">📄 SKD (Surat Keterangan Dokter)</h4>
+        <div style="font-size:12.5px;color:var(--text-muted);line-height:1.7">
+          <p>• Form Prudential resmi — isi oleh dokter yang merawat</p>
+          <p>• 1 SKD = 1 hari perawatan. Misal: rawat inap 5-8 Jan (1 SKD) + rawat jalan 1 Jan & 3 Jan = total 3 SKD</p>
+          <p>• Foto SKD dulu ke agen sebelum kirim untuk verifikasi</p>
+          <p>• Isi: data pasien, diagnosa utama & tambahan, gejala, hasil lab, terapi, info kecelakaan jika ada</p>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════
+function renderSettings() {
+  document.getElementById('topbarActions').innerHTML='';
+  const s=D.settings||{};
+  document.getElementById('content').innerHTML=`
+    <div class="card">
+      <div class="card-header"><h3>Profile</h3></div>
+      <div class="form-row"><div class="form-group"><label>Your Name (RM)</label><input id="s_rm" value="${s.rmName||''}"></div>
+      <div class="form-group"><label>Leader Name</label><input id="s_leader" value="${s.leaderName||''}"></div></div>
+      <div class="form-group"><label>Agency</label><input id="s_agency" value="${s.agencyName||''}"></div>
+      <button class="btn btn-primary" style="margin-top:12px" onclick="D.settings={rmName:document.getElementById('s_rm').value.trim(),leaderName:document.getElementById('s_leader').value.trim(),agencyName:document.getElementById('s_agency').value.trim()};save();toast('Saved')">Save</button>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Quick Start</h3></div>
+      <div style="font-size:12.5px;color:var(--text-muted);line-height:1.8">
+        <p><strong>1.</strong> Set your name & leader name above</p>
+        <p><strong>2.</strong> Add clients → policies → claims → follow-ups</p>
+        <p><strong>3.</strong> Log activities from each WA chat, call, or meeting</p>
+        <p><strong>4.</strong> Use WA Report to generate weekly summary for leader</p>
+        <p><strong>5.</strong> Go to <strong>Sync Devices</strong> to transfer data between laptop ↔ iPhone</p>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════
+// SYNC DEVICES
+// ═══════════════════════════════════
+function renderSync() {
+  document.getElementById('topbarActions').innerHTML='';
+  const lastSaved = D._lastSaved ? fmtDate(D._lastSaved) + ' ' + new Date(D._lastSaved).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) : 'Never';
+  const totalItems = D.clients.length + D.claims.length + D.followups.length + D.activities.length;
+
+  document.getElementById('content').innerHTML=`
+    <div class="card" style="border-color:var(--accent);border-width:1px">
+      <h3 style="font-family:'Playfair Display',serif;font-size:18px;margin-bottom:6px">📱 ↔ 💻 Sync Between Devices</h3>
+      <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:16px">
+        Data is saved in your browser's local storage. To use on another device, export the JSON file, save it to Google Drive, then import it on the other device.
+      </p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+        <div style="background:var(--surface2);border-radius:10px;padding:16px;text-align:center">
+          <div style="font-size:28px;margin-bottom:6px">📥</div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px">Step 1: Export</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-bottom:12px">Download data from THIS device</div>
+          <button class="btn btn-primary" style="width:100%" onclick="exportSync()">Export Data</button>
+        </div>
+        <div style="background:var(--surface2);border-radius:10px;padding:16px;text-align:center">
+          <div style="font-size:28px;margin-bottom:6px">📤</div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px">Step 2: Import</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-bottom:12px">Load data on NEW device</div>
+          <button class="btn btn-primary" style="width:100%" onclick="document.getElementById('syncImpF').click()">Import Data</button>
+          <input type="file" id="syncImpF" accept=".json" style="display:none" onchange="importSync(this)">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Current Data Summary</h3></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+        <div style="text-align:center;padding:10px;background:var(--surface2);border-radius:8px">
+          <div style="font-size:20px;font-weight:700;font-family:'Playfair Display',serif">${D.clients.length}</div>
+          <div style="font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px">Clients</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:var(--surface2);border-radius:8px">
+          <div style="font-size:20px;font-weight:700;font-family:'Playfair Display',serif">${D.claims.length}</div>
+          <div style="font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px">Claims</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:var(--surface2);border-radius:8px">
+          <div style="font-size:20px;font-weight:700;font-family:'Playfair Display',serif">${D.followups.length}</div>
+          <div style="font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px">Follow-ups</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:var(--surface2);border-radius:8px">
+          <div style="font-size:20px;font-weight:700;font-family:'Playfair Display',serif">${D.activities.length}</div>
+          <div style="font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px">Activities</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-dim)">Last saved: <strong style="color:var(--text-muted)">${lastSaved}</strong></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>How to Sync</h3></div>
+      <div style="font-size:12.5px;color:var(--text-muted);line-height:1.9">
+        <p>📱 <strong>Dari laptop ke iPhone:</strong></p>
+        <p style="padding-left:14px">1. Di laptop: klik <strong>Export Data</strong> → file JSON terdownload</p>
+        <p style="padding-left:14px">2. Upload file JSON ke <strong>Google Drive</strong></p>
+        <p style="padding-left:14px">3. Di iPhone: buka tracker → Sync → <strong>Import Data</strong> → pilih file dari Drive</p>
+        <p style="margin-top:10px">📱 <strong>Dari iPhone ke laptop:</strong></p>
+        <p style="padding-left:14px">1. Di iPhone: klik Export → file tersimpan</p>
+        <p style="padding-left:14px">2. Share ke Google Drive atau kirim via WA/email ke diri sendiri</p>
+        <p style="padding-left:14px">3. Di laptop: buka tracker → Sync → Import</p>
+        <p style="margin-top:10px">💡 <strong>Tip:</strong> Buat folder <strong>"RM Tracker Backup"</strong> di Google Drive untuk menyimpan semua backup.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Danger Zone</h3></div>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Reset all data on this device. Cannot be undone.</p>
+      <button class="btn btn-danger" onclick="if(confirm('Delete ALL data on this device?')&&confirm('This cannot be undone. Are you sure?')){D=defaultData();save();toast('All data cleared');nav('dashboard')}">🗑 Clear All Data</button>
+    </div>`;
+}
+
+function exportSync() {
+  const blob = new Blob([JSON.stringify(D, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  const dateStr = today().replace(/-/g,'');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'RM_Tracker_' + dateStr + '.json';
+  a.click();
+  toast('File downloaded! Save to Google Drive to sync.');
+}
+
+function importSync(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!imported.clients && !imported.activities) {
+        toast('Invalid file — not a tracker backup');
+        return;
+      }
+      const clientCount = (imported.clients||[]).length;
+      const claimCount = (imported.claims||[]).length;
+      if (!confirm('Import ' + clientCount + ' clients, ' + claimCount + ' claims? This will REPLACE all current data on this device.')) return;
+      D = imported;
+      save();
+      toast('Data imported successfully!');
+      nav('dashboard');
+    } catch(err) {
+      toast('Error reading file');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// ═══════════════════════════════════
+// INIT
+// ═══════════════════════════════════
+nav('dashboard');
+</script>
+</body>
+</html>
