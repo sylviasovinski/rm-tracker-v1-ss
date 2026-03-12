@@ -718,6 +718,8 @@ function openAddClientModal(client) {
     <h3>${c.id?'Edit':'Add'} Client</h3>
     <div class="form-row"><div class="form-group"><label>Full Name *</label><input id="f_name" value="${c.name||''}" placeholder="Budi Santoso"></div>
     <div class="form-group"><label>Phone / WA *</label><input id="f_phone" value="${c.phone||''}" placeholder="08xxx"></div></div>
+    <div class="form-row"><div class="form-group"><label>Pemegang Polis</label><input id="f_pp" value="${c.pemegangPolis||''}" placeholder="Nama pemegang polis"></div>
+    <div class="form-group"><label>Tertanggung Utama</label><input id="f_tu" value="${c.tertanggungUtama||''}" placeholder="Nama tertanggung utama"></div></div>
     <div class="form-row"><div class="form-group"><label>Email</label><input id="f_email" value="${c.email||''}" type="email"></div>
     <div class="form-group"><label>Date of Birth</label><input id="f_dob" value="${c.dob||''}" type="date"></div></div>
     <div class="form-group"><label>Address</label><input id="f_addr" value="${c.address||''}"></div>
@@ -735,6 +737,8 @@ function saveClient(id) {
   if(!name){toast('Name required');return;}
   const obj={
     id:id||uid(), name, phone:document.getElementById('f_phone').value.trim(),
+    pemegangPolis:document.getElementById('f_pp').value.trim(),
+    tertanggungUtama:document.getElementById('f_tu').value.trim(),
     email:document.getElementById('f_email').value.trim(), dob:document.getElementById('f_dob').value,
     address:document.getElementById('f_addr').value.trim(),
     emergencyContact1:document.getElementById('f_ec1').value.trim(),
@@ -788,6 +792,8 @@ function renderClientDetail(clientId) {
   let html = `
     <div class="detail-meta">
       <div class="detail-meta-item"><div class="label">Phone/WA</div><div class="val">${c.phone||'—'}</div></div>
+      ${c.pemegangPolis?`<div class="detail-meta-item"><div class="label">Pemegang Polis</div><div class="val">${c.pemegangPolis}</div></div>`:''}
+      ${c.tertanggungUtama?`<div class="detail-meta-item"><div class="label">Tertanggung Utama</div><div class="val">${c.tertanggungUtama}</div></div>`:''}
       <div class="detail-meta-item"><div class="label">Email</div><div class="val">${c.email||'—'}</div></div>
       <div class="detail-meta-item"><div class="label">DOB</div><div class="val">${fmtDate(c.dob)}</div></div>
       <div class="detail-meta-item"><div class="label">Address</div><div class="val">${c.address||'—'}</div></div>
@@ -801,9 +807,10 @@ function renderClientDetail(clientId) {
       <div class="card-header"><h3>Policies (${policies.length})</h3>
         <button class="btn btn-sm btn-primary" onclick="openPolicyModal('${c.id}')">+ Add Policy</button></div>
       ${!policies.length?'<p style="color:var(--text-dim);font-size:12px">No policies.</p>':`
-      <div class="table-wrap"><table><thead><tr><th>Policy No</th><th>Product</th><th>Premium</th><th>Status</th><th>Due</th><th></th></tr></thead>
+      <div class="table-wrap"><table><thead><tr><th>Policy No</th><th>Product</th><th>Type</th><th>Premium</th><th>Status</th><th>Due</th><th></th></tr></thead>
       <tbody>${policies.map((p,i)=>`<tr>
         <td style="font-weight:600">${p.policyNo||'—'}</td><td>${p.product||'—'}</td>
+        <td><span class="badge ${p.insuranceType==='UnitLink'?'badge-blue':p.insuranceType==='Syariah'?'badge-teal':'badge-purple'}">${p.insuranceType||'Traditional'}</span></td>
         <td>${rupiah(p.premium)}</td>
         <td><span class="badge ${p.status==='Active'?'badge-green':p.status==='Lapsed'?'badge-red':'badge-yellow'}">${p.status||'Active'}</span></td>
         <td>${fmtDate(p.dueDate)}</td>
@@ -894,9 +901,12 @@ function openPolicyModal(cid) {
     <div class="form-group"><label>Product</label><select id="f_prod">
       <option>PruWell Medical</option><option>PruWell Hospital</option><option>PRULink</option><option>PRUCritical</option><option>PRUSolusi Sehat</option><option>Other</option>
     </select></div></div>
-    <div class="form-row"><div class="form-group"><label>Premium (Rp)</label><input id="f_prem" type="number" placeholder="500000"></div>
-    <div class="form-group"><label>Status</label><select id="f_pstat"><option>Active</option><option>Lapsed</option><option>Paid Up</option><option>Pending</option></select></div></div>
-    <div class="form-group"><label>Next Due Date</label><input id="f_pdue" type="date"></div>
+    <div class="form-row"><div class="form-group"><label>Insurance Type</label><select id="f_instype">
+      <option>Traditional</option><option>UnitLink</option><option>Syariah</option>
+    </select></div>
+    <div class="form-group"><label>Premium (Rp)</label><input id="f_prem" type="number" placeholder="500000"></div></div>
+    <div class="form-row"><div class="form-group"><label>Status</label><select id="f_pstat"><option>Active</option><option>Lapsed</option><option>Paid Up</option><option>Pending</option></select></div>
+    <div class="form-group"><label>Next Due Date</label><input id="f_pdue" type="date"></div></div>
     <div class="form-actions"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
     <button class="btn btn-primary" onclick="savePol('${cid}')">Save</button></div>`);
 }
@@ -904,6 +914,7 @@ function openPolicyModal(cid) {
 function savePol(cid) {
   const c=D.clients.find(x=>x.id===cid); if(!c)return; if(!c.policies) c.policies=[];
   c.policies.push({ policyNo:document.getElementById('f_pno').value.trim(), product:document.getElementById('f_prod').value,
+    insuranceType:document.getElementById('f_instype').value,
     premium:document.getElementById('f_prem').value, status:document.getElementById('f_pstat').value, dueDate:document.getElementById('f_pdue').value });
   addActivity(cid,c.name,'policy','Policy added: '+document.getElementById('f_pno').value.trim());
   save();closeModal();toast('Policy added');renderClientDetail(cid);
