@@ -1308,15 +1308,15 @@ function genReport() {
   const iA=document.getElementById('rpt_act').checked, iC=document.getElementById('rpt_cl').checked, iF=document.getElementById('rpt_fu').checked;
   const s=D.settings||{};
   let L=[];
-  L.push(`📋 *LAPORAN RM — ${s.rmName||'RM'}*`);
-  L.push(`Periode: ${fmtDate(from)} — ${fmtDate(to)}`);
-  L.push(`Tanggal: ${fmtDate(today())}`);
+  L.push(`📋 *Recap*`);
+  L.push(`Period: ${fmtDate(from)} — ${fmtDate(to)}`);
+  L.push(`Date: ${fmtDate(today())}`);
   L.push('─────────────────');
 
   if(iA){
     const acts=D.activities.filter(a=>a.date>=from&&a.date<=to+'T23:59:59').sort((a,b)=>new Date(b.date)-new Date(a.date));
-    L.push(''); L.push(`📝 *AKTIVITAS (${acts.length})*`);
-    if(!acts.length) L.push('Tidak ada aktivitas.');
+    L.push(''); L.push(`📝 *ACTIVITIES (${acts.length})*`);
+    if(!acts.length) L.push('No activities in this period.');
     else {
       const grouped={};
       acts.forEach(a=>{if(!grouped[a.clientName])grouped[a.clientName]=[];grouped[a.clientName].push(a);});
@@ -1331,8 +1331,8 @@ function genReport() {
     const cls=D.claims.filter(c=>c.date>=from&&c.date<=to);
     const pending=D.claims.filter(c=>!['Settled','Rejected'].includes(c.status));
     L.push(''); L.push('─────────────────');
-    L.push(`🏥 *KLAIM*`);
-    L.push(`Klaim periode ini: ${cls.length} | Pending total: ${pending.length}`);
+    L.push(`🏥 *CLAIMS*`);
+    L.push(`This period: ${cls.length} | Total pending: ${pending.length}`);
     cls.forEach(c=>L.push(`  • ${c.clientName} — ${c.serviceType} ${c.method} — ${c.rsName||'—'} — *${c.status}* — ${c.currentStep||''}`));
     if(pending.length){ L.push('\n⚠️ *Pending:*'); pending.forEach(c=>L.push(`  • ${c.clientName} — ${c.rsName||'—'} — ${c.currentStep} (${c.status})`)); }
   }
@@ -1341,16 +1341,16 @@ function genReport() {
     const overdue=D.followups.filter(f=>f.status!=='Done'&&daysFrom(f.dueDate)<0);
     const upcoming=D.followups.filter(f=>f.status!=='Done'&&daysFrom(f.dueDate)>=0&&daysFrom(f.dueDate)<=7);
     L.push(''); L.push('─────────────────');
-    L.push(`⏰ *FOLLOW-UP*`);
-    L.push(`Overdue: ${overdue.length} | Upcoming 7 hari: ${upcoming.length}`);
+    L.push(`⏰ *FOLLOW-UPS*`);
+    L.push(`Overdue: ${overdue.length} | Upcoming 7 days: ${upcoming.length}`);
     if(overdue.length){ L.push('\n⚠️ *Overdue:*'); overdue.forEach(f=>L.push(`  • ${f.clientName} — ${f.task} (${fmtShort(f.dueDate)})`)); }
     if(upcoming.length){ L.push('\n📅 *Upcoming:*'); upcoming.forEach(f=>L.push(`  • ${f.clientName} — ${f.task} (${fmtShort(f.dueDate)})`)); }
   }
 
   L.push(''); L.push('─────────────────');
-  L.push(`Total klien: ${D.clients.length}`);
-  L.push(`Polis aktif: ${D.clients.reduce((a,c)=>a+(c.policies||[]).filter(p=>p.status==='Active').length,0)}`);
-  L.push(''); L.push(`Terima kasih 🙏`); L.push(`_${s.rmName||'RM'}_`);
+  L.push(`Total clients: ${D.clients.length}`);
+  L.push(`Active policies: ${D.clients.reduce((a,c)=>a+(c.policies||[]).filter(p=>p.status==='Active').length,0)}`);
+  L.push(''); L.push(`Thank You 🙏`); L.push(`_Sylvia Sovinski_`);
 
   const report = L.join('\n');
   document.getElementById('rptOut').innerHTML=`<div class="card">
