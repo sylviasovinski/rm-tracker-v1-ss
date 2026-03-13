@@ -812,21 +812,76 @@ function renderClientDetail(clientId) {
     </div>
     ${controlHtml}
 
-    <!-- POLICIES -->
-    <div class="card">
-      <div class="card-header"><h3>Policies (${policies.length})</h3>
-        <button class="btn btn-sm btn-primary" onclick="openPolicyModal('${c.id}')">+ Add Policy</button></div>
-      ${!policies.length?'<p style="color:var(--text-dim);font-size:12px">No policies.</p>':`
-      <div class="table-wrap"><table><thead><tr><th>Policy No</th><th>Product</th><th>Type</th><th>Premium</th><th>Status</th><th>Due</th><th></th></tr></thead>
-      <tbody>${policies.map((p,i)=>`<tr>
-        <td style="font-weight:600">${p.policyNo||'—'}</td><td>${p.product||'—'}</td>
-        <td><span class="badge ${p.insuranceType==='UnitLink'?'badge-blue':p.insuranceType==='Syariah'?'badge-teal':'badge-purple'}">${p.insuranceType||'Traditional'}</span></td>
-        <td>${rupiah(p.premium)}</td>
-        <td><span class="badge ${p.status==='Active'?'badge-green':p.status==='Lapsed'?'badge-red':'badge-yellow'}">${p.status||'Active'}</span></td>
-        <td>${fmtDate(p.dueDate)}</td>
-        <td><button class="btn btn-ghost btn-xs" onclick="D.clients.find(c=>c.id==='${c.id}').policies.splice(${i},1);save();toast('Removed');renderClientDetail('${c.id}')">✕</button></td>
-      </tr>`).join('')}</tbody></table></div>`}
-    </div>
+<!-- POLICIES -->
+<div class="card">
+  <div class="card-header">
+    <h3>Policies (${policies.length})</h3>
+    <button class="btn btn-sm btn-primary" onclick="openPolicyModal('${c.id}')">+ Add Policy</button>
+  </div>
+  ${!policies.length
+    ? '<p style="color:var(--text-dim);font-size:12px">No policies.</p>'
+    : `
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Policy No</th>
+          <th>Product</th>
+          <th>Type</th>
+          <th>Premium</th>
+          <th>Freq</th>
+          <th>Status</th>
+          <th>Due</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${policies.map((p,i)=>`
+        <tr>
+          <td style="font-weight:600">${p.policyNo || '—'}</td>
+          <td>${p.product || '—'}</td>
+          <td>
+            <span class="badge ${
+              p.insuranceType==='UnitLink'
+                ? 'badge-blue'
+                : p.insuranceType==='Syariah'
+                  ? 'badge-teal'
+                  : 'badge-purple'
+            }">
+              ${p.insuranceType || 'Traditional'}
+            </span>
+          </td>
+          <td>${rupiah(p.premium)}</td>
+          <td>${p.paymentFrequency || 'Monthly'}</td>
+          <td>
+            <span class="badge ${
+              p.status==='Active'
+                ? 'badge-green'
+                : p.status==='Lapsed'
+                  ? 'badge-red'
+                  : 'badge-yellow'
+            }">
+              ${p.status || 'Active'}
+            </span>
+          </td>
+          <td>${fmtDate(p.dueDate)}</td>
+          <td>
+            <button
+              class="btn btn-ghost btn-xs"
+              onclick="
+                D.clients.find(c=>c.id==='${c.id}').policies.splice(${i},1);
+                save();
+                toast('Removed');
+                renderClientDetail('${c.id}')
+              "
+            >✕</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`}
+</div>
+
 
     <!-- CLAIMS -->
     <div class="card">
