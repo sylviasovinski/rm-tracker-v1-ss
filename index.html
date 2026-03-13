@@ -784,7 +784,7 @@ function renderClientDetail(clientId) {
   const policies = c.policies||[];
   const claims = D.claims.filter(cl=>cl.clientId===c.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
   const followups = D.followups.filter(f=>f.clientId===c.id).sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate));
-  const activities = D.activities.filter(a=>a.clientId===c.id).sort((a,b)=>{ const dd=new Date(b.date)-new Date(a.date); if(dd!==0)return dd; return (a.sortOrder||0)-(b.sortOrder||0); });
+  const activities = D.activities.filter(a=>a.clientId===c.id).sort(actSort);
 
   // 30/90-day control check
   const settledInpatient = claims.filter(cl => cl.status==='Settled' && cl.serviceType==='Rawat Inap' && cl.dischargeDate);
@@ -1389,28 +1389,37 @@ function deleteActivity(actId, cid) {
 }
 
 function moveActivity(actId, cid, direction) {
-  // Get this client's activities sorted as displayed (newest first by date, then by sortOrder)
   const clientActs = D.activities.filter(a => a.clientId === cid);
-  clientActs.sort((a,b) => {
-    const dd = new Date(b.date) - new Date(a.date);
-    if (dd !== 0) return dd;
-    return (a.sortOrder||0) - (b.sortOrder||0);
-  });
+  // Sort the same way the view does
+  clientActs.sort(actSort);
+
+  // First time: assign sortOrder to all based on current date order
+  const needsInit = clientActs.some(a => a.sortOrder == null);
+  if (needsInit) clientActs.forEach((a, i) => a.sortOrder = i);
+
+  // Re-sort by sortOrder now that all have it
+  clientActs.sort((a,b) => a.sortOrder - b.sortOrder);
 
   const idx = clientActs.findIndex(a => a.id === actId);
   if (idx < 0) return;
   const newIdx = idx + direction;
   if (newIdx < 0 || newIdx >= clientActs.length) return;
 
-  // Assign sortOrder to all items to make order explicit
-  clientActs.forEach((a, i) => a.sortOrder = i);
-  // Swap
-  const tempOrder = clientActs[idx].sortOrder;
+  // Swap sortOrder
+  const tmp = clientActs[idx].sortOrder;
   clientActs[idx].sortOrder = clientActs[newIdx].sortOrder;
-  clientActs[newIdx].sortOrder = tempOrder;
+  clientActs[newIdx].sortOrder = tmp;
 
   save();
   renderClientDetail(cid);
+}
+
+// Shared sort function for activities
+function actSort(a, b) {
+  // If both have sortOrder, use that (manual ordering)
+  if (a.sortOrder != null && b.sortOrder != null) return a.sortOrder - b.sortOrder;
+  // Otherwise fall back to date (newest first)
+  return new Date(b.date) - new Date(a.date);
 }
 
 // Track which clients have expanded activity log
