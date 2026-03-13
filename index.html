@@ -783,7 +783,7 @@ function renderClientDetail(clientId) {
 
   const policies = c.policies||[];
   const claims = D.claims.filter(cl=>cl.clientId===c.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
-  const followups = D.followups.filter(f=>f.clientId===c.id).sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate));
+  const followups = D.followups.filter(f=>f.clientId===c.id).sort(fuSort);
   const activities = D.activities.filter(a=>a.clientId===c.id).sort(actSort);
 
   // 30/90-day control check
@@ -870,18 +870,27 @@ function renderClientDetail(clientId) {
       <div class="card-header"><h3>Follow-ups (${followups.length})</h3>
         <button class="btn btn-sm btn-primary" onclick="openFollowupModal('${c.id}')">+ Add</button></div>
       ${!followups.length?'<p style="color:var(--text-dim);font-size:12px">No follow-ups.</p>':`
-      <div class="table-wrap"><table><thead><tr><th>Due</th><th>Task</th><th>Status</th><th></th></tr></thead>
+      <div class="table-wrap"><table><thead><tr><th>Due</th><th>Task</th><th>Priority</th><th>Status</th><th></th></tr></thead>
       <tbody>${followups.map(f=>{
         const d=daysFrom(f.dueDate); const ov=d<0&&f.status!=='Done';
+        const pri={Urgent:'badge-red',High:'badge-orange',Normal:'badge-blue'};
         return `<tr>
           <td style="${ov?'color:var(--red)':''}">${fmtShort(f.dueDate)} ${ov?'⚠':''}</td>
-          <td>${f.task}</td>
-          <td><select onchange="updFUStatus('${f.id}',this.value)" style="padding:3px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;font-family:inherit">
+          <td>${f.task}${f.notes?`<div style="font-size:11px;color:var(--text-dim);margin-top:2px">${f.notes}</div>`:''}</td>
+          <td><span class="badge ${pri[f.priority]||'badge-blue'}">${f.priority||'Normal'}</span></td>
+          <td><select onchange="updFUStatus('${f.id}',this.value);save();renderClientDetail('${c.id}')" style="padding:3px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;font-family:inherit">
             <option ${f.status==='Pending'?'selected':''}>Pending</option>
             <option ${f.status==='In Progress'?'selected':''}>In Progress</option>
             <option ${f.status==='Done'?'selected':''}>Done</option>
           </select></td>
-          <td><button class="btn btn-ghost btn-xs" onclick="D.followups=D.followups.filter(x=>x.id!=='${f.id}');save();toast('Removed');renderClientDetail('${c.id}')">✕</button></td>
+          <td>
+            <div style="display:flex;gap:2px">
+              <button class="btn btn-ghost btn-xs" onclick="moveFU('${f.id}','${c.id}',-1)" title="Move up" style="padding:3px 4px;font-size:10px">▲</button>
+              <button class="btn btn-ghost btn-xs" onclick="moveFU('${f.id}','${c.id}',1)" title="Move down" style="padding:3px 4px;font-size:10px">▼</button>
+              <button class="btn btn-ghost btn-xs" onclick="openEditFUModal('${f.id}','${c.id}')" title="Edit">✎</button>
+              <button class="btn btn-ghost btn-xs" onclick="deleteFU('${f.id}','${c.id}')" title="Delete">✕</button>
+            </div>
+          </td>
         </tr>`;}).join('')}</tbody></table></div>`}
     </div>
 
@@ -1291,6 +1300,76 @@ function updFUStatus(fuId, status) {
   f.status=status;
   if(status==='Done') addActivity(f.clientId,f.clientName,'followup','Completed: '+f.task);
   save();toast('Updated');
+}
+
+function openEditFUModal(fuId, cid) {
+  const f = D.followups.find(x=>x.id===fuId);
+  if (!f) return;
+  openModal(`<h3>Edit Follow-up</h3>
+    <div class="form-group"><label>Task *</label><input id="f_eft" value="${f.task||''}"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Due Date *</label><input id="f_efd" type="date" value="${f.dueDate||''}"></div>
+      <div class="form-group"><label>Priority</label><select id="f_efp">
+        <option ${f.priority==='Normal'?'selected':''}>Normal</option>
+        <option ${f.priority==='High'?'selected':''}>High</option>
+        <option ${f.priority==='Urgent'?'selected':''}>Urgent</option>
+      </select></div>
+    </div>
+    <div class="form-group"><label>Status</label><select id="f_efs">
+      <option ${f.status==='Pending'?'selected':''}>Pending</option>
+      <option ${f.status==='In Progress'?'selected':''}>In Progress</option>
+      <option ${f.status==='Done'?'selected':''}>Done</option>
+    </select></div>
+    <div class="form-group"><label>Notes</label><textarea id="f_efn">${f.notes||''}</textarea></div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditFU('${fuId}','${cid}')">Save</button>
+    </div>`);
+}
+
+function saveEditFU(fuId, cid) {
+  const f = D.followups.find(x=>x.id===fuId);
+  if (!f) return;
+  const task = document.getElementById('f_eft').value.trim();
+  if (!task) { toast('Task required'); return; }
+  f.task = task;
+  f.dueDate = document.getElementById('f_efd').value;
+  f.priority = document.getElementById('f_efp').value;
+  f.status = document.getElementById('f_efs').value;
+  f.notes = document.getElementById('f_efn').value.trim();
+  if (f.status==='Done') addActivity(f.clientId, f.clientName, 'followup', 'Completed: '+f.task);
+  save(); closeModal(); toast('Follow-up updated'); renderClientDetail(cid);
+}
+
+function deleteFU(fuId, cid) {
+  if (!confirm('Delete this follow-up?')) return;
+  D.followups = D.followups.filter(x=>x.id!==fuId);
+  save(); toast('Follow-up deleted'); renderClientDetail(cid);
+}
+
+function moveFU(fuId, cid, direction) {
+  const clientFUs = D.followups.filter(f => f.clientId === cid);
+  clientFUs.sort(fuSort);
+
+  const needsInit = clientFUs.some(f => f.fuOrder == null);
+  if (needsInit) clientFUs.forEach((f, i) => f.fuOrder = i);
+  clientFUs.sort((a,b) => a.fuOrder - b.fuOrder);
+
+  const idx = clientFUs.findIndex(f => f.id === fuId);
+  if (idx < 0) return;
+  const newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= clientFUs.length) return;
+
+  const tmp = clientFUs[idx].fuOrder;
+  clientFUs[idx].fuOrder = clientFUs[newIdx].fuOrder;
+  clientFUs[newIdx].fuOrder = tmp;
+
+  save(); renderClientDetail(cid);
+}
+
+function fuSort(a, b) {
+  if (a.fuOrder != null && b.fuOrder != null) return a.fuOrder - b.fuOrder;
+  return new Date(a.dueDate) - new Date(b.dueDate);
 }
 
 function renderFollowups() {
