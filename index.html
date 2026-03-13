@@ -877,12 +877,19 @@ function renderClientDetail(clientId) {
 
     <!-- ACTIVITY LOG -->
     <div class="card">
-      <div class="card-header"><h3>Activity Log</h3>
+      <div class="card-header"><h3>Activity Log (${activities.length})</h3>
         <button class="btn btn-sm btn-primary" onclick="openActivityModal('${c.id}')">+ Log</button></div>
-      ${!activities.length?'<p style="color:var(--text-dim);font-size:12px">No activity.</p>':
-        activities.slice(0,20).map(a=>{
+      ${!activities.length?'<p style="color:var(--text-dim);font-size:12px">No activity.</p>':`
+      <div style="margin-bottom:10px">
+        <div class="search-box" style="width:100%">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input placeholder="Search activity..." id="actSearch_${c.id}" oninput="filterActivities('${c.id}')">
+        </div>
+      </div>
+      <div id="actList_${c.id}">
+        ${activities.slice(0,5).map(a=>{
           const colors={call:'var(--green)',note:'var(--accent)',claim:'var(--orange)',policy:'var(--purple)',followup:'var(--yellow)',other:'var(--text-dim)'};
-          return `<div class="activity-item">
+          return `<div class="activity-item" data-act-text="${(a.text||'').toLowerCase().replace(/"/g,'&quot;')}">
             <div class="activity-dot" style="background:${colors[a.type]||colors.other}"></div>
             <div class="activity-content"><div class="text">${a.text}</div><div class="meta">${fmtDate(a.date)}</div></div>
             <div style="display:flex;gap:4px;flex-shrink:0;align-self:center">
@@ -891,6 +898,27 @@ function renderClientDetail(clientId) {
             </div>
           </div>`;
         }).join('')}
+      </div>
+      <div id="actMore_${c.id}" style="display:none">
+        ${activities.slice(5).map(a=>{
+          const colors={call:'var(--green)',note:'var(--accent)',claim:'var(--orange)',policy:'var(--purple)',followup:'var(--yellow)',other:'var(--text-dim)'};
+          return `<div class="activity-item" data-act-text="${(a.text||'').toLowerCase().replace(/"/g,'&quot;')}">
+            <div class="activity-dot" style="background:${colors[a.type]||colors.other}"></div>
+            <div class="activity-content"><div class="text">${a.text}</div><div class="meta">${fmtDate(a.date)}</div></div>
+            <div style="display:flex;gap:4px;flex-shrink:0;align-self:center">
+              <button class="btn btn-ghost btn-xs" onclick="openEditActivityModal('${a.id}','${c.id}')" title="Edit">✎</button>
+              <button class="btn btn-ghost btn-xs" onclick="deleteActivity('${a.id}','${c.id}')" title="Delete">✕</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      ${activities.length>5?`
+      <div style="text-align:center;padding-top:8px" id="actToggle_${c.id}">
+        <button class="btn btn-ghost btn-sm" onclick="toggleActMore('${c.id}')">
+          <span id="actToggleText_${c.id}">Show all ${activities.length} activities ▾</span>
+        </button>
+      </div>`:''}
+      `}
     </div>`;
 
   document.getElementById('content').innerHTML = html;
@@ -1333,6 +1361,48 @@ function deleteActivity(actId, cid) {
   if(!confirm('Delete this activity log?')) return;
   D.activities = D.activities.filter(x=>x.id!==actId);
   save();toast('Activity deleted');renderClientDetail(cid);
+}
+
+function toggleActMore(cid) {
+  const more = document.getElementById('actMore_'+cid);
+  const txt = document.getElementById('actToggleText_'+cid);
+  if (more.style.display === 'none') {
+    more.style.display = 'block';
+    txt.textContent = 'Show less ▴';
+  } else {
+    more.style.display = 'none';
+    const total = D.activities.filter(a=>a.clientId===cid).length;
+    txt.textContent = 'Show all ' + total + ' activities ▾';
+  }
+}
+
+function filterActivities(cid) {
+  const q = (document.getElementById('actSearch_'+cid)?.value||'').toLowerCase();
+  const list = document.getElementById('actList_'+cid);
+  const more = document.getElementById('actMore_'+cid);
+  const toggle = document.getElementById('actToggle_'+cid);
+
+  // When searching, show all items and filter; when empty, restore collapsed view
+  if (q) {
+    if (more) more.style.display = 'block';
+    if (toggle) toggle.style.display = 'none';
+    const allItems = [...(list?.querySelectorAll('.activity-item')||[]), ...(more?.querySelectorAll('.activity-item')||[])];
+    allItems.forEach(el => {
+      const text = el.getAttribute('data-act-text')||'';
+      el.style.display = text.includes(q) ? '' : 'none';
+    });
+  } else {
+    // Reset to collapsed
+    if (more) more.style.display = 'none';
+    if (toggle) {
+      toggle.style.display = '';
+      const total = D.activities.filter(a=>a.clientId===cid).length;
+      const txt = document.getElementById('actToggleText_'+cid);
+      if (txt) txt.textContent = 'Show all ' + total + ' activities ▾';
+    }
+    const allItems = [...(list?.querySelectorAll('.activity-item')||[]), ...(more?.querySelectorAll('.activity-item')||[])];
+    allItems.forEach(el => el.style.display = '');
+  }
 }
 
 // ═══════════════════════════════════
