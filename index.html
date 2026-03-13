@@ -911,7 +911,7 @@ function renderClientDetail(clientId) {
         ${activities.map((a,i)=>{
           const colors={call:'var(--green)',note:'var(--accent)',claim:'var(--orange)',policy:'var(--purple)',followup:'var(--yellow)',other:'var(--text-dim)'};
           const d=new Date(a.date); const ym=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-          return `<div class="activity-item act-entry" data-act-text="${(a.text||'').toLowerCase().replace(/"/g,'&quot;')}" data-month="${ym}" ${i>=5?`style="display:none" data-collapsed="1"`':''}>
+          return `<div class="activity-item act-entry" data-act-text="${(a.text||'').toLowerCase().replace(/"/g,'&quot;')}" data-month="${ym}" ${i>=5?'style="display:none" data-collapsed="1"':''}>
             <div class="activity-dot" style="background:${colors[a.type]||colors.other}"></div>
             <div class="activity-content"><div class="text">${a.text}</div><div class="meta">${fmtDate(a.date)}</div></div>
             <div style="display:flex;gap:4px;flex-shrink:0;align-self:center">
