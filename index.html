@@ -784,7 +784,7 @@ function renderClientDetail(clientId) {
   const policies = c.policies||[];
   const claims = D.claims.filter(cl=>cl.clientId===c.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
   const followups = D.followups.filter(f=>f.clientId===c.id).sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate));
-  const activities = D.activities.filter(a=>a.clientId===c.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const activities = D.activities.filter(a=>a.clientId===c.id).sort((a,b)=>{ const dd=new Date(b.date)-new Date(a.date); if(dd!==0)return dd; return (a.sortOrder||0)-(b.sortOrder||0); });
 
   // 30/90-day control check
   const settledInpatient = claims.filter(cl => cl.status==='Settled' && cl.serviceType==='Rawat Inap' && cl.dischargeDate);
@@ -914,7 +914,9 @@ function renderClientDetail(clientId) {
           return `<div class="activity-item act-entry" data-act-text="${(a.text||'').toLowerCase().replace(/"/g,'&quot;')}" data-month="${ym}" ${i>=5?'style="display:none" data-collapsed="1"':''}>
             <div class="activity-dot" style="background:${colors[a.type]||colors.other}"></div>
             <div class="activity-content"><div class="text">${a.text}</div><div class="meta">${fmtDate(a.date)}</div></div>
-            <div style="display:flex;gap:4px;flex-shrink:0;align-self:center">
+            <div style="display:flex;gap:2px;flex-shrink:0;align-self:center">
+              <button class="btn btn-ghost btn-xs" onclick="moveActivity('${a.id}','${c.id}',-1)" title="Move up" style="padding:3px 4px;font-size:10px">▲</button>
+              <button class="btn btn-ghost btn-xs" onclick="moveActivity('${a.id}','${c.id}',1)" title="Move down" style="padding:3px 4px;font-size:10px">▼</button>
               <button class="btn btn-ghost btn-xs" onclick="openEditActivityModal('${a.id}','${c.id}')" title="Edit">✎</button>
               <button class="btn btn-ghost btn-xs" onclick="deleteActivity('${a.id}','${c.id}')" title="Delete">✕</button>
             </div>
@@ -1384,6 +1386,31 @@ function deleteActivity(actId, cid) {
   if(!confirm('Delete this activity log?')) return;
   D.activities = D.activities.filter(x=>x.id!==actId);
   save();toast('Activity deleted');renderClientDetail(cid);
+}
+
+function moveActivity(actId, cid, direction) {
+  // Get this client's activities sorted as displayed (newest first by date, then by sortOrder)
+  const clientActs = D.activities.filter(a => a.clientId === cid);
+  clientActs.sort((a,b) => {
+    const dd = new Date(b.date) - new Date(a.date);
+    if (dd !== 0) return dd;
+    return (a.sortOrder||0) - (b.sortOrder||0);
+  });
+
+  const idx = clientActs.findIndex(a => a.id === actId);
+  if (idx < 0) return;
+  const newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= clientActs.length) return;
+
+  // Assign sortOrder to all items to make order explicit
+  clientActs.forEach((a, i) => a.sortOrder = i);
+  // Swap
+  const tempOrder = clientActs[idx].sortOrder;
+  clientActs[idx].sortOrder = clientActs[newIdx].sortOrder;
+  clientActs[newIdx].sortOrder = tempOrder;
+
+  save();
+  renderClientDetail(cid);
 }
 
 // Track which clients have expanded activity log
