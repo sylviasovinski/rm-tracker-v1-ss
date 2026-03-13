@@ -890,29 +890,28 @@ function renderClientDetail(clientId) {
       <div class="card-header"><h3>Activity Log (${activities.length})</h3>
         <button class="btn btn-sm btn-primary" onclick="openActivityModal('${c.id}')">+ Log</button></div>
       ${!activities.length?'<p style="color:var(--text-dim);font-size:12px">No activity.</p>':`
-      <div style="margin-bottom:10px">
-        <div class="search-box" style="width:100%">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+        <div class="search-box" style="flex:1;min-width:150px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input placeholder="Search activity..." id="actSearch_${c.id}" oninput="filterActivities('${c.id}')">
         </div>
       </div>
-      <div id="actList_${c.id}">
-        ${activities.slice(0,5).map(a=>{
-          const colors={call:'var(--green)',note:'var(--accent)',claim:'var(--orange)',policy:'var(--purple)',followup:'var(--yellow)',other:'var(--text-dim)'};
-          return `<div class="activity-item" data-act-text="${(a.text||'').toLowerCase().replace(/"/g,'&quot;')}">
-            <div class="activity-dot" style="background:${colors[a.type]||colors.other}"></div>
-            <div class="activity-content"><div class="text">${a.text}</div><div class="meta">${fmtDate(a.date)}</div></div>
-            <div style="display:flex;gap:4px;flex-shrink:0;align-self:center">
-              <button class="btn btn-ghost btn-xs" onclick="openEditActivityModal('${a.id}','${c.id}')" title="Edit">✎</button>
-              <button class="btn btn-ghost btn-xs" onclick="deleteActivity('${a.id}','${c.id}')" title="Delete">✕</button>
-            </div>
-          </div>`;
-        }).join('')}
+      <div style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap" id="actMonthFilter_${c.id}">
+        <button class="btn btn-xs btn-primary" onclick="filterActMonth('${c.id}','all',this)" data-month="all">All</button>
+        ${(() => {
+          const months = [...new Set(activities.map(a => { const d=new Date(a.date); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }))];
+          return months.map(m => {
+            const [y,mo] = m.split('-');
+            const label = new Date(y,mo-1).toLocaleDateString('en',{month:'short',year:'numeric'});
+            return `<button class="btn btn-xs btn-secondary" onclick="filterActMonth('${c.id}','${m}',this)" data-month="${m}">${label}</button>`;
+          }).join('');
+        })()}
       </div>
-      <div id="actMore_${c.id}" style="display:none">
-        ${activities.slice(5).map(a=>{
+      <div id="actAll_${c.id}">
+        ${activities.map((a,i)=>{
           const colors={call:'var(--green)',note:'var(--accent)',claim:'var(--orange)',policy:'var(--purple)',followup:'var(--yellow)',other:'var(--text-dim)'};
-          return `<div class="activity-item" data-act-text="${(a.text||'').toLowerCase().replace(/"/g,'&quot;')}">
+          const d=new Date(a.date); const ym=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+          return `<div class="activity-item act-entry" data-act-text="${(a.text||'').toLowerCase().replace(/"/g,'&quot;')}" data-month="${ym}" ${i>=5?`style="display:none" data-collapsed="1"`':''}>
             <div class="activity-dot" style="background:${colors[a.type]||colors.other}"></div>
             <div class="activity-content"><div class="text">${a.text}</div><div class="meta">${fmtDate(a.date)}</div></div>
             <div style="display:flex;gap:4px;flex-shrink:0;align-self:center">
@@ -924,7 +923,7 @@ function renderClientDetail(clientId) {
       </div>
       ${activities.length>5?`
       <div style="text-align:center;padding-top:8px" id="actToggle_${c.id}">
-        <button class="btn btn-ghost btn-sm" onclick="toggleActMore('${c.id}')">
+        <button class="btn btn-ghost btn-sm" onclick="toggleActAll('${c.id}')">
           <span id="actToggleText_${c.id}">Show all ${activities.length} activities ▾</span>
         </button>
       </div>`:''}
@@ -932,6 +931,14 @@ function renderClientDetail(clientId) {
     </div>`;
 
   document.getElementById('content').innerHTML = html;
+
+  // Restore expanded state if it was expanded before
+  if (_actExpanded[c.id]) {
+    const container = document.getElementById('actAll_'+c.id);
+    if (container) container.querySelectorAll('.act-entry[data-collapsed]').forEach(el => { el.style.display=''; el.removeAttribute('data-collapsed'); });
+    const txt = document.getElementById('actToggleText_'+c.id);
+    if (txt) txt.textContent = 'Show less ▴';
+  }
 }
 
 // ═══════════════════════════════════
@@ -1379,45 +1386,93 @@ function deleteActivity(actId, cid) {
   save();toast('Activity deleted');renderClientDetail(cid);
 }
 
-function toggleActMore(cid) {
-  const more = document.getElementById('actMore_'+cid);
+// Track which clients have expanded activity log
+let _actExpanded = {};
+let _actMonthFilter = {};
+
+function toggleActAll(cid) {
+  const container = document.getElementById('actAll_'+cid);
   const txt = document.getElementById('actToggleText_'+cid);
-  if (more.style.display === 'none') {
-    more.style.display = 'block';
-    txt.textContent = 'Show less ▴';
+  if (!container) return;
+
+  if (_actExpanded[cid]) {
+    // Collapse
+    _actExpanded[cid] = false;
+    container.querySelectorAll('.act-entry').forEach((el,i) => {
+      if (i >= 5) { el.style.display = 'none'; el.setAttribute('data-collapsed','1'); }
+    });
+    const total = container.querySelectorAll('.act-entry').length;
+    if (txt) txt.textContent = 'Show all ' + total + ' activities ▾';
   } else {
-    more.style.display = 'none';
-    const total = D.activities.filter(a=>a.clientId===cid).length;
-    txt.textContent = 'Show all ' + total + ' activities ▾';
+    // Expand
+    _actExpanded[cid] = true;
+    container.querySelectorAll('.act-entry[data-collapsed]').forEach(el => {
+      el.style.display = '';
+      el.removeAttribute('data-collapsed');
+    });
+    if (txt) txt.textContent = 'Show less ▴';
+  }
+}
+
+function filterActMonth(cid, month, btn) {
+  _actMonthFilter[cid] = month;
+  const container = document.getElementById('actAll_'+cid);
+  const toggle = document.getElementById('actToggle_'+cid);
+  if (!container) return;
+
+  // Update button styles
+  const filterBar = document.getElementById('actMonthFilter_'+cid);
+  if (filterBar) filterBar.querySelectorAll('button').forEach(b => {
+    b.className = b === btn ? 'btn btn-xs btn-primary' : 'btn btn-xs btn-secondary';
+  });
+
+  const entries = container.querySelectorAll('.act-entry');
+  if (month === 'all') {
+    // Restore expand/collapse state
+    entries.forEach((el,i) => {
+      if (_actExpanded[cid]) {
+        el.style.display = '';
+      } else {
+        el.style.display = i >= 5 ? 'none' : '';
+      }
+    });
+    if (toggle) toggle.style.display = entries.length > 5 ? '' : 'none';
+  } else {
+    // Filter by month — show all matching, hide toggle
+    entries.forEach(el => {
+      el.style.display = el.getAttribute('data-month') === month ? '' : 'none';
+    });
+    if (toggle) toggle.style.display = 'none';
   }
 }
 
 function filterActivities(cid) {
   const q = (document.getElementById('actSearch_'+cid)?.value||'').toLowerCase();
-  const list = document.getElementById('actList_'+cid);
-  const more = document.getElementById('actMore_'+cid);
+  const container = document.getElementById('actAll_'+cid);
   const toggle = document.getElementById('actToggle_'+cid);
+  if (!container) return;
 
-  // When searching, show all items and filter; when empty, restore collapsed view
+  const entries = container.querySelectorAll('.act-entry');
   if (q) {
-    if (more) more.style.display = 'block';
-    if (toggle) toggle.style.display = 'none';
-    const allItems = [...(list?.querySelectorAll('.activity-item')||[]), ...(more?.querySelectorAll('.activity-item')||[])];
-    allItems.forEach(el => {
+    // Search mode — show all matching, hide toggle
+    entries.forEach(el => {
       const text = el.getAttribute('data-act-text')||'';
       el.style.display = text.includes(q) ? '' : 'none';
     });
+    if (toggle) toggle.style.display = 'none';
   } else {
-    // Reset to collapsed
-    if (more) more.style.display = 'none';
-    if (toggle) {
-      toggle.style.display = '';
-      const total = D.activities.filter(a=>a.clientId===cid).length;
-      const txt = document.getElementById('actToggleText_'+cid);
-      if (txt) txt.textContent = 'Show all ' + total + ' activities ▾';
+    // Reset to current state (respect month filter and expand state)
+    const mf = _actMonthFilter[cid] || 'all';
+    if (mf !== 'all') {
+      entries.forEach(el => el.style.display = el.getAttribute('data-month')===mf ? '' : 'none');
+      if (toggle) toggle.style.display = 'none';
+    } else {
+      entries.forEach((el,i) => {
+        if (_actExpanded[cid]) { el.style.display = ''; }
+        else { el.style.display = i >= 5 ? 'none' : ''; }
+      });
+      if (toggle) toggle.style.display = entries.length > 5 ? '' : 'none';
     }
-    const allItems = [...(list?.querySelectorAll('.activity-item')||[]), ...(more?.querySelectorAll('.activity-item')||[])];
-    allItems.forEach(el => el.style.display = '');
   }
 }
 
