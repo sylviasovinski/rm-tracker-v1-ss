@@ -560,25 +560,20 @@ function renderDashboard() {
   const overdueFU = D.followups.filter(f => f.status!=='Done' && daysFrom(f.dueDate)<0).length;
   const upFU = D.followups.filter(f => f.status!=='Done' && daysFrom(f.dueDate)>=0 && daysFrom(f.dueDate)<=7).length;
 
-  // 30-day control reminders
   const controlReminders = [];
   D.claims.filter(c => c.status==='Settled' && c.serviceType==='Rawat Inap' && c.dischargeDate).forEach(cl => {
-    const d = daysFrom(cl.dischargeDate);
-    const daysLeft = 30 + d; // d is negative (past), so 30+d = days remaining
-    // Actually: discharge was in the past, so days since discharge = -d
-    const daysSince = -d;
+    const daysSince = -daysFrom(cl.dischargeDate);
     if (daysSince >= 0 && daysSince <= 90) {
-      const client = D.clients.find(c => c.id === cl.clientId);
-      controlReminders.push({ client, claim:cl, daysSince, daysLeft: 90-daysSince });
+      controlReminders.push({ client:D.clients.find(c=>c.id===cl.clientId), claim:cl, daysSince, daysLeft:90-daysSince });
     }
   });
 
   document.getElementById('topbarActions').innerHTML = `
     <button class="btn btn-primary" onclick="openAddClientModal()">+ Add Client</button>`;
 
-  const recentAct = [...D.activities].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
-  const urgentFU = D.followups.filter(f=>f.status!=='Done').sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate)).slice(0,6);
-  const activeClaims = D.claims.filter(c=>!['Settled','Rejected'].includes(c.status)).slice(0,5);
+  const allAct = [...D.activities].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const allFU = D.followups.filter(f=>f.status!=='Done').sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate));
+  const allActiveClaims = D.claims.filter(c=>!['Settled','Rejected'].includes(c.status));
 
   let html = `
     <div class="stats-row">
@@ -588,7 +583,6 @@ function renderDashboard() {
       <div class="stat-card"><div class="label">Follow-ups</div><div class="value" style="color:${overdueFU?'var(--red)':'var(--green)'}">${upFU}</div><div class="sub">${overdueFU} overdue</div></div>
     </div>`;
 
-  // Control reminders
   if (controlReminders.length) {
     html += controlReminders.map(cr => `
       <div class="control-banner">
@@ -599,53 +593,68 @@ function renderDashboard() {
 
   html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">`;
 
-  // Active claims
-  if (activeClaims.length) {
+  // ── Active Claims (collapsible + search) ──
+  if (allActiveClaims.length) {
     html += `<div class="card">
-      <div class="card-header"><h3>Active Claims</h3></div>
-      ${activeClaims.map(cl => {
+      <div class="card-header"><h3>Active Claims (${allActiveClaims.length})</h3></div>
+      <div style="margin-bottom:8px"><div class="search-box" style="width:100%"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="Search claims..." oninput="dashSearch(this,'dClaims')"></div></div>
+      <div id="dClaims">
+      ${allActiveClaims.map((cl,i) => {
         const client = D.clients.find(c=>c.id===cl.clientId);
-        return `<div style="margin-bottom:12px;cursor:pointer" onclick="nav('clientDetail',{clientId:'${cl.clientId}'})">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <span style="font-weight:600;font-size:13px">${client?.name||'?'}</span>
-            <span class="badge ${cl.method==='Cashless'?'badge-teal':'badge-purple'}">${cl.method||'—'}</span>
+        const searchText = [client?.name,cl.rsName,cl.method,cl.status,cl.claimStage,cl.cashlessStatus].filter(Boolean).join(' ').toLowerCase();
+        return `<div class="dash-item${i>=4?' dash-extra':''}" data-search="${searchText}" ${i>=4?'style="display:none"':''}>
+          <div style="margin-bottom:12px;cursor:pointer" onclick="nav('clientDetail',{clientId:'${cl.clientId}'})">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span style="font-weight:600;font-size:13px">${client?.name||'?'}</span>
+              <span class="badge ${cl.method==='Cashless'?'badge-teal':'badge-purple'}">${cl.method||'—'}</span>
+            </div>
+            ${cl.rsName?`<span class="rs-tag">🏥 ${cl.rsName}</span>`:''}
+            ${renderPipeline(cl)}
           </div>
-          ${cl.rsName?`<span class="rs-tag">🏥 ${cl.rsName}</span>`:''}
-          ${renderPipeline(cl)}
         </div>`;
       }).join('')}
+      </div>
+      ${allActiveClaims.length>4?`<div style="text-align:center;padding-top:6px" id="dClaimsToggle"><button class="btn btn-ghost btn-sm" onclick="dashToggle('dClaims',${allActiveClaims.length})">Show all ${allActiveClaims.length} ▾</button></div>`:''}
     </div>`;
   }
 
-  // Recent activity
+  // ── Recent Activity (collapsible + search) ──
   html += `<div class="card">
-    <div class="card-header"><h3>Recent Activity</h3></div>
-    ${recentAct.length===0?'<p style="color:var(--text-dim);font-size:12px">No activities yet.</p>':
-      recentAct.map(a => {
-        const colors={call:'var(--green)',note:'var(--accent)',claim:'var(--orange)',policy:'var(--purple)',followup:'var(--yellow)',other:'var(--text-dim)'};
-        return `<div class="activity-item">
+    <div class="card-header"><h3>Recent Activity (${allAct.length})</h3></div>
+    ${!allAct.length?'<p style="color:var(--text-dim);font-size:12px">No activities yet.</p>':`
+    <div style="margin-bottom:8px"><div class="search-box" style="width:100%"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="Search activity..." oninput="dashSearch(this,'dActivity')"></div></div>
+    <div id="dActivity">
+    ${allAct.map((a,i) => {
+      const colors={call:'var(--green)',note:'var(--accent)',claim:'var(--orange)',policy:'var(--purple)',followup:'var(--yellow)',other:'var(--text-dim)'};
+      const searchText = [a.text,a.clientName].filter(Boolean).join(' ').toLowerCase();
+      return `<div class="dash-item${i>=5?' dash-extra':''}" data-search="${searchText}" ${i>=5?'style="display:none"':''}>
+        <div class="activity-item">
           <div class="activity-dot" style="background:${colors[a.type]||colors.other}"></div>
           <div class="activity-content">
             <div class="text">${a.text}</div>
             <div class="meta">${fmtDate(a.date)}${a.clientName?' · '+a.clientName:''}</div>
           </div>
-        </div>`;
-      }).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+    </div>
+    ${allAct.length>5?`<div style="text-align:center;padding-top:6px" id="dActivityToggle"><button class="btn btn-ghost btn-sm" onclick="dashToggle('dActivity',${allAct.length})">Show all ${allAct.length} ▾</button></div>`:''}`}
   </div>`;
 
   html += `</div>`;
 
-  // Urgent followups
-  if (urgentFU.length) {
+  // ── Upcoming Follow-ups (collapsible + search) ──
+  if (allFU.length) {
     html += `<div class="card">
-      <div class="card-header"><h3>Upcoming Follow-ups</h3></div>
-      <div class="table-wrap"><table><thead><tr><th>Client</th><th>Task</th><th>Due</th><th>Status</th></tr></thead><tbody>
-      ${urgentFU.map(f => {
+      <div class="card-header"><h3>Upcoming Follow-ups (${allFU.length})</h3></div>
+      <div style="margin-bottom:8px"><div class="search-box" style="width:100%"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="Search follow-ups..." oninput="dashSearch(this,'dFollowups')"></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Client</th><th>Task</th><th>Due</th><th>Status</th></tr></thead><tbody id="dFollowups">
+      ${allFU.map((f,i) => {
         const d = daysFrom(f.dueDate);
-        const overdue = d<0 && f.status!=='Done';
         let lbl = d<0?Math.abs(d)+'d overdue':d===0?'Today':d===1?'Tomorrow':d+'d';
         let bc = d<0?'badge-red':d<=2?'badge-orange':'badge-blue';
-        return `<tr class="clickable" onclick="nav('clientDetail',{clientId:'${f.clientId}'})">
+        const searchText = [f.clientName,f.task].filter(Boolean).join(' ').toLowerCase();
+        return `<tr class="clickable dash-item${i>=5?' dash-extra':''}" data-search="${searchText}" ${i>=5?'style="display:none"':''} onclick="nav('clientDetail',{clientId:'${f.clientId}'})">
           <td style="font-weight:600">${f.clientName}</td>
           <td>${f.task}</td>
           <td><span class="badge ${bc}">${lbl}</span></td>
@@ -653,6 +662,7 @@ function renderDashboard() {
         </tr>`;
       }).join('')}
       </tbody></table></div>
+      ${allFU.length>5?`<div style="text-align:center;padding-top:6px" id="dFollowupsToggle"><button class="btn btn-ghost btn-sm" onclick="dashToggle('dFollowups',${allFU.length})">Show all ${allFU.length} ▾</button></div>`:''}
     </div>`;
   }
 
@@ -1210,12 +1220,15 @@ function renderClaims() {
         <option value="pending" ${claimFilter==='pending'?'selected':''}>Pending</option>
         <option value="settled" ${claimFilter==='settled'?'selected':''}>Settled</option>
       </select>
+      <div class="search-box" style="flex:1;max-width:300px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="Search claims..." oninput="pageSearch(this,'claimsList')"></div>
     </div>`;
 
   if (!filtered.length) { html += '<div class="empty-state"><h4>No claims</h4></div>'; }
   else {
-    html += filtered.map(cl => `
-      <div class="card" style="cursor:pointer" onclick="nav('clientDetail',{clientId:'${cl.clientId}'})">
+    html += `<div id="claimsList">` + filtered.map(cl => {
+      const searchText = [cl.clientName,cl.rsName,cl.method,cl.status,cl.serviceType,cl.diagnosis,cl.claimStage,cl.cashlessStatus].filter(Boolean).join(' ').toLowerCase();
+      return `
+      <div class="card page-item" data-search="${searchText}" style="cursor:pointer" onclick="nav('clientDetail',{clientId:'${cl.clientId}'})">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
           <div>
             <span style="font-weight:600">${cl.clientName}</span>
@@ -1228,8 +1241,8 @@ function renderClaims() {
         <div style="font-size:12px;color:var(--text-muted);margin-top:4px">${cl.serviceType} · ${cl.diagnosis||'—'}</div>
         <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">${cl.claimStage?`<span class="badge badge-yellow">Stage: ${cl.claimStage}</span>`:''} ${cl.cashlessStatus?`<span class="badge badge-teal">Cashless: ${cl.cashlessStatus}</span>`:''}</div>
         ${renderPipeline(cl)}
-      </div>
-    `).join('');
+      </div>`;
+    }).join('') + `</div>`;
   }
 
   document.getElementById('content').innerHTML = html;
@@ -1280,15 +1293,18 @@ function renderFollowups() {
 
   if(!all.length){ document.getElementById('content').innerHTML='<div class="empty-state"><h4>No follow-ups</h4></div>'; return; }
 
-  let html=`<div class="card"><div class="table-wrap"><table>
+  let html=`<div class="card">
+    <div style="margin-bottom:10px"><div class="search-box" style="width:100%;max-width:350px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="Search follow-ups..." oninput="pageSearch(this,'fuList')"></div></div>
+    <div class="table-wrap"><table>
     <thead><tr><th>Client</th><th>Task</th><th>Due</th><th>Priority</th><th>Status</th><th></th><th></th></tr></thead>
-    <tbody>${all.map(f=>{
+    <tbody id="fuList">${all.map(f=>{
       const d=daysFrom(f.dueDate); const ov=d<0&&f.status!=='Done';
       const client=D.clients.find(c=>c.id===f.clientId);
       let lbl=d<0?Math.abs(d)+'d overdue':d===0?'Today':d+'d';
       let bc=d<0?'badge-red':d<=2?'badge-orange':'badge-blue';
       const pri={Urgent:'badge-red',High:'badge-orange',Normal:'badge-blue'};
-      return `<tr class="clickable" onclick="nav('clientDetail',{clientId:'${f.clientId}'})">
+      const searchText = [f.clientName,f.task,f.priority,f.status].join(' ').toLowerCase();
+      return `<tr class="clickable page-item" data-search="${searchText}" onclick="nav('clientDetail',{clientId:'${f.clientId}'})">
         <td style="font-weight:600">${f.clientName}</td><td>${f.task}</td>
         <td><span class="badge ${bc}">${lbl}</span></td>
         <td><span class="badge ${pri[f.priority]||'badge-blue'}">${f.priority}</span></td>
@@ -1406,7 +1422,53 @@ function filterActivities(cid) {
 }
 
 // ═══════════════════════════════════
-// WA REPORT
+// DASHBOARD & PAGE SEARCH HELPERS
+// ═══════════════════════════════════
+function dashToggle(containerId, total) {
+  const container = document.getElementById(containerId);
+  const toggleBtn = document.getElementById(containerId+'Toggle');
+  if (!container) return;
+  const extras = container.querySelectorAll('.dash-extra');
+  const isHidden = extras[0]?.style.display === 'none';
+  extras.forEach(el => el.style.display = isHidden ? '' : 'none');
+  if (toggleBtn) {
+    toggleBtn.innerHTML = isHidden
+      ? `<button class="btn btn-ghost btn-sm" onclick="dashToggle('${containerId}',${total})">Show less ▴</button>`
+      : `<button class="btn btn-ghost btn-sm" onclick="dashToggle('${containerId}',${total})">Show all ${total} ▾</button>`;
+  }
+}
+
+function dashSearch(input, containerId) {
+  const q = (input.value||'').toLowerCase();
+  const container = document.getElementById(containerId);
+  const toggleBtn = document.getElementById(containerId+'Toggle');
+  if (!container) return;
+  const items = container.querySelectorAll('.dash-item');
+  if (q) {
+    if (toggleBtn) toggleBtn.style.display = 'none';
+    items.forEach(el => {
+      const text = el.getAttribute('data-search')||'';
+      el.style.display = text.includes(q) ? '' : 'none';
+    });
+  } else {
+    // Reset: hide extras, show toggle
+    items.forEach((el,i) => {
+      el.style.display = el.classList.contains('dash-extra') ? 'none' : '';
+    });
+    if (toggleBtn) toggleBtn.style.display = '';
+  }
+}
+
+function pageSearch(input, containerId) {
+  const q = (input.value||'').toLowerCase();
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const items = container.querySelectorAll('.page-item');
+  items.forEach(el => {
+    const text = el.getAttribute('data-search')||'';
+    el.style.display = q ? (text.includes(q) ? '' : 'none') : '';
+  });
+}
 // ═══════════════════════════════════
 function renderReport() {
   document.getElementById('topbarActions').innerHTML='';
