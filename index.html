@@ -812,76 +812,22 @@ function renderClientDetail(clientId) {
     </div>
     ${controlHtml}
 
-<!-- POLICIES -->
-<div class="card">
-  <div class="card-header">
-    <h3>Policies (${policies.length})</h3>
-    <button class="btn btn-sm btn-primary" onclick="openPolicyModal('${c.id}')">+ Add Policy</button>
-  </div>
-  ${!policies.length
-    ? '<p style="color:var(--text-dim);font-size:12px">No policies.</p>'
-    : `
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Policy No</th>
-          <th>Product</th>
-          <th>Type</th>
-          <th>Premium</th>
-          <th>Freq</th>
-          <th>Status</th>
-          <th>Due</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        ${policies.map((p,i)=>`
-        <tr>
-          <td style="font-weight:600">${p.policyNo || '—'}</td>
-          <td>${p.product || '—'}</td>
-          <td>
-            <span class="badge ${
-              p.insuranceType==='UnitLink'
-                ? 'badge-blue'
-                : p.insuranceType==='Syariah'
-                  ? 'badge-teal'
-                  : 'badge-purple'
-            }">
-              ${p.insuranceType || 'Traditional'}
-            </span>
-          </td>
-          <td>${rupiah(p.premium)}</td>
-          <td>${p.paymentFrequency || 'Monthly'}</td>
-          <td>
-            <span class="badge ${
-              p.status==='Active'
-                ? 'badge-green'
-                : p.status==='Lapsed'
-                  ? 'badge-red'
-                  : 'badge-yellow'
-            }">
-              ${p.status || 'Active'}
-            </span>
-          </td>
-          <td>${fmtDate(p.dueDate)}</td>
-          <td>
-            <button
-              class="btn btn-ghost btn-xs"
-              onclick="
-                D.clients.find(c=>c.id==='${c.id}').policies.splice(${i},1);
-                save();
-                toast('Removed');
-                renderClientDetail('${c.id}')
-              "
-            >✕</button>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-  </div>`}
-</div>
-
+    <!-- POLICIES -->
+    <div class="card">
+      <div class="card-header"><h3>Policies (${policies.length})</h3>
+        <button class="btn btn-sm btn-primary" onclick="openPolicyModal('${c.id}')">+ Add Policy</button></div>
+      ${!policies.length?'<p style="color:var(--text-dim);font-size:12px">No policies.</p>':`
+      <div class="table-wrap"><table><thead><tr><th>Policy No</th><th>Product</th><th>Type</th><th>Premium</th><th>Payment</th><th>Status</th><th>Due</th><th></th></tr></thead>
+      <tbody>${policies.map((p,i)=>`<tr>
+        <td style="font-weight:600">${p.policyNo||'—'}</td><td>${p.product||'—'}</td>
+        <td><span class="badge ${p.insuranceType==='UnitLink'?'badge-blue':p.insuranceType==='Syariah'?'badge-teal':'badge-purple'}">${p.insuranceType||'Traditional'}</span></td>
+        <td>${rupiah(p.premium)}</td>
+        <td><span class="badge badge-blue">${p.paymentFreq||'Monthly'}</span></td>
+        <td><span class="badge ${p.status==='Active'?'badge-green':p.status==='Lapsed'?'badge-red':'badge-yellow'}">${p.status||'Active'}</span></td>
+        <td>${fmtDate(p.dueDate)}</td>
+        <td><button class="btn btn-ghost btn-xs" onclick="D.clients.find(c=>c.id==='${c.id}').policies.splice(${i},1);save();toast('Removed');renderClientDetail('${c.id}')">✕</button></td>
+      </tr>`).join('')}</tbody></table></div>`}
+    </div>
 
     <!-- CLAIMS -->
     <div class="card">
@@ -1014,14 +960,17 @@ function openPolicyModal(cid) {
   openModal(`<h3>Add Policy</h3>
     <div class="form-row"><div class="form-group"><label>Policy Number</label><input id="f_pno" placeholder="POL-123456"></div>
     <div class="form-group"><label>Product</label><select id="f_prod">
-      <option>PruWell Medical</option><option>PruWell Hospital</option><option>PRULink</option><option>PRUCritical</option><option>PRUSolusi Sehat</option><option>PruHeritage Syariah</option><option>Other</option>
+      <option>PruWell Medical</option><option>PruWell Hospital</option><option>PRULink</option><option>PRUCritical</option><option>PRUSolusi Sehat</option><option>Other</option>
     </select></div></div>
     <div class="form-row"><div class="form-group"><label>Insurance Type</label><select id="f_instype">
       <option>Traditional</option><option>UnitLink</option><option>Syariah</option>
     </select></div>
     <div class="form-group"><label>Premium (Rp)</label><input id="f_prem" type="number" placeholder="500000"></div></div>
-    <div class="form-row"><div class="form-group"><label>Status</label><select id="f_pstat"><option>Active</option><option>Lapsed</option><option>Paid Up</option><option>Pending</option></select></div>
-    <div class="form-group"><label>Next Due Date</label><input id="f_pdue" type="date"></div></div>
+    <div class="form-row"><div class="form-group"><label>Payment Frequency</label><select id="f_freq">
+      <option>Monthly</option><option>Quarterly</option><option>Semi-Annual</option><option>Yearly</option><option>Single Payment</option>
+    </select></div>
+    <div class="form-group"><label>Status</label><select id="f_pstat"><option>Active</option><option>Lapsed</option><option>Paid Up</option><option>Pending</option></select></div></div>
+    <div class="form-group"><label>Next Due Date</label><input id="f_pdue" type="date"></div>
     <div class="form-actions"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
     <button class="btn btn-primary" onclick="savePol('${cid}')">Save</button></div>`);
 }
@@ -1029,7 +978,7 @@ function openPolicyModal(cid) {
 function savePol(cid) {
   const c=D.clients.find(x=>x.id===cid); if(!c)return; if(!c.policies) c.policies=[];
   c.policies.push({ policyNo:document.getElementById('f_pno').value.trim(), product:document.getElementById('f_prod').value,
-    insuranceType:document.getElementById('f_instype').value,
+    insuranceType:document.getElementById('f_instype').value, paymentFreq:document.getElementById('f_freq').value,
     premium:document.getElementById('f_prem').value, status:document.getElementById('f_pstat').value, dueDate:document.getElementById('f_pdue').value });
   addActivity(cid,c.name,'policy','Policy added: '+document.getElementById('f_pno').value.trim());
   save();closeModal();toast('Policy added');renderClientDetail(cid);
